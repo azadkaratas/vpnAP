@@ -1,0 +1,8 @@
+menu "Target packages"
+    source "$BR2_EXTERNAL_APPLICATION_PATH/package/webctl/Config.in"
+    source "$BR2_EXTERNAL_APPLICATION_PATH/package/messenger/Config.in"
+endmenu
+
+menu "Select the board"
+    source "$BR2_EXTERNAL_APPLICATION_PATH/board/rpi3b/Config.in"
+endmenu
