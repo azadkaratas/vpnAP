@@ -87,6 +87,10 @@ app.post('/api/config', (req, res) => {
             const networkConfig = `
 auto lo
 iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+
 auto wlan0
 iface wlan0 inet static
     address ${ipAddress}
@@ -94,10 +98,6 @@ iface wlan0 inet static
     network ${network}
     broadcast ${broadcast}
     gateway ${gateway}
-    pre-up wpa_supplicant -B -Dnl80211 -iwlan0 -c/etc/wpa_supplicant.conf
-    post-down killall -q wpa_supplicant
-    wait-delay 15
-iface default inet static
             `;
 
             // Write to /etc/network/interfaces
