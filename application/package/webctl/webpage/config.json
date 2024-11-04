@@ -1,5 +1,5 @@
 {
-  "deviceName": "NewDevice",
-  "port": "8080",
-  "status": "active"
+  "WifiName": "rpi-wifi",
+  "WifiPassword": "raspberry",
+  "InternetStatus": "enabled"
 }

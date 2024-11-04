@@ -9,107 +9,42 @@ var DBus = require('dbus');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
 // API endpoint to get current configuration
-app.get('/api/config', (req, res) => {
+app.get('/api/wifiConfig', (req, res) => {
     fs.readFile('/usr/html/config.json', 'utf8', (configErr, configData) => {
         if (configErr) {
             console.error("Error reading config file!", configErr);
             return res.status(500).json({ message: 'Error reading config file' });
         }
-
-        // Read /etc/network/interfaces for network configuration
-        fs.readFile('/etc/network/interfaces', 'utf8', (networkErr, networkData) => {
-            if (networkErr) {
-                console.error("Error reading interfaces file!", networkErr);
-                return res.status(500).json({ message: 'Error reading interfaces file' });
-            }
-
-            // Parse IP address from network interfaces data
-            const ipMatch = networkData.match(/address\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
-            const netmaskMatch = networkData.match(/netmask\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
-            const networkMatch = networkData.match(/network\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
-            const broadcastMatch = networkData.match(/broadcast\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
-            const gatewayMatch = networkData.match(/gateway\s+([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)/);
-
-            const ipAddress = ipMatch ? ipMatch[1] : '';
-            const netmask = netmaskMatch ? netmaskMatch[1] : '';
-            const network = networkMatch ? networkMatch[1] : '';
-            const broadcast = broadcastMatch ? broadcastMatch[1] : '';
-            const gateway = gatewayMatch ? gatewayMatch[1] : '';
-
-            // Combine config and network data into a single JSON response
-            const config = JSON.parse(configData);
-            res.json({
-                deviceName: config.deviceName,
-                port: config.port,
-                status: config.status,
-                ipAddress: ipAddress,
-                netmask: netmask,
-                network: network,
-                broadcast: broadcast,
-                gateway: gateway
-            });
+        const config = JSON.parse(configData);
+        res.json({
+            WifiName: config.WifiName,
+            WifiPassword: config.WifiPassword,
+            InternetStatus: config.InternetStatus
         });
     });
 });
 
-app.post('/api/config', (req, res) => {
-    const { deviceName, ipAddress, port, status, netmask, network, broadcast, gateway } = req.body;
+app.post('/api/wifiConfig', (req, res) => {
+    const { WifiName, WifiPassword, InternetStatus} = req.body;
 
     // Define paths
     const configPath = '/usr/html/config.json';
-    const networkInterfacesPath = '/etc/network/interfaces';
 
-    exec(`ifconfig wlan0 ${ipAddress}`, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error changing IP address: ${error.message}`);
-            return res.status(500).json({ message: 'Error changing IP address' });
+    // Prepare config.json data
+    const newConfig = {
+        WifiName: WifiName,
+        WifiPassword: WifiPassword,
+        InternetStatus: InternetStatus
+    };
+
+    // Write to config.json
+    fs.writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf8', (err) => {
+        if (err) {
+            console.error("Error writing config.json:", err);
+            return res.status(500).json({ message: 'Error writing config file' });
         }
-        if (stderr) {
-            console.error(`Command stderr: ${stderr}`);
-            return res.status(500).json({ message: 'Command error', details: stderr });
-        }
-
-        // Prepare config.json data
-        const newConfig = {
-            deviceName: deviceName,
-            port: port,
-            status: status
-        };
-
-        // Write to config.json
-        fs.writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf8', (err) => {
-            if (err) {
-                console.error("Error writing config.json:", err);
-                return res.status(500).json({ message: 'Error writing config file' });
-            }
-
-            // Prepare network interface configuration
-            const networkConfig = `
-auto lo
-iface lo inet loopback
-
-auto eth0
-iface eth0 inet dhcp
-
-auto wlan0
-iface wlan0 inet static
-    address ${ipAddress}
-    netmask ${netmask}
-    network ${network}
-    broadcast ${broadcast}
-    gateway ${gateway}
-            `;
-
-            // Write to /etc/network/interfaces
-            fs.writeFile(networkInterfacesPath, networkConfig, 'utf8', (err) => {
-                if (err) {
-                    console.error("Error writing network interfaces file:", err);
-                    return res.status(500).json({ message: 'Error updating network interfaces file' });
-                }
-                console.log("Configuration and network interfaces updated successfully.");
-                res.json({ message: 'Configuration updated successfully' });
-            });
-        });
+        console.log("Wi-Fi Configuration updated successfully.");
+        res.json({ message: 'Configuration updated successfully' });
     });
 });
 
@@ -205,6 +140,46 @@ app.get('/api/device-status', (req, res) => {
                 });
             });
         });
+    });
+});
+
+
+app.get('/api/vpn-status', (req, res) => {
+    const isConnected = true;//checkVPNConnection();
+    res.json({ isConnected: isConnected });
+});
+
+app.get('/api/connected-devices', (req, res) => {
+    fs.readFile('/var/lib/dhcp/dhcpd.leases', 'utf8', (err, data) => {
+        if (err) {
+            console.error("Couldn't read DHCP file:", err);
+            return res.status(500).json({ message: "Couldn't read DHCP file" });
+        }
+
+
+        const leases = [];
+        const registeredIPs = new Map();
+        const leaseBlocks = data.split('lease ').slice(1); // ilk kısmı ayır
+
+        leaseBlocks.forEach(block => {
+            const lines = block.trim().split('\n');
+            const lease = {};
+
+            lease.ip = lines[0].trim().split(' ')[0]; // IP adresini al
+            lines.forEach(line => {
+                if (line.includes('client-hostname')) {
+                    lease.hostname = line.split('"')[1]; // Hostname'i al
+                } else if (line.includes('binding state active')) {
+                    lease.active = true; // Aktif durumu
+                }
+            });
+            if (lease.active) {
+                registeredIPs.set(lease.ip, lease);
+            }
+        });
+
+        registeredIPs.forEach(value => leases.push(value));
+        res.json(leases);
     });
 });
 

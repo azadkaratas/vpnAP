@@ -60,16 +60,21 @@ body, html {
 
 .content {
     flex-grow: 1;
-    padding: 30px;
+    padding: 0px;
     background-color: #ffffff;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
 }
 
 #content-area {
     background-color: #ffffff;
     padding: 30px;
+}
+
+.sub-content-area {
+    background-color: #ffffff;
+    padding: 30px;
     border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 6px 6px 6px rgba(0, 0, 0, 0.2);
+    margin-bottom: 15px;
 }
 
 h2 {
@@ -145,13 +150,6 @@ button:hover {
     }
 }
 
-#content-area {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-}
-
 .btn {
     padding: 10px 20px;
     font-size: 16px;
@@ -177,16 +175,6 @@ button:hover {
     font-size: 16px;
 }
 
-#networkInfo, #statsInfo {
-    margin-bottom: 15px;
-}
-
-.network-title {
-    font-size: 18px;
-    font-weight: bold;
-    margin-top: 10px;
-}
-
 .chart-container {
     width: 50%;
     min-width: 400px; 
@@ -195,4 +183,17 @@ button:hover {
 canvas {
     width: 100% !important;
     height: auto !important;
+}
+
+.status-led {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: grey; /* Varsayılan renkte */
+}
+.led-green {
+    background-color: green;
+}
+.led-red {
+    background-color: red;
 }
