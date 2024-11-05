@@ -91,6 +91,39 @@ app.post('/api/restart', (req, res) => {
     });
 });
 
+app.get('/api/network-status', (req, res) => {
+    exec("cat /sys/class/net/eth0/carrier", (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+            return;
+        }
+
+        const isEthernetConnected = stdout.trim() === '1';
+        
+        if (isEthernetConnected) {
+            exec("ifconfig eth0 | grep 'inet ' | awk '{print $2}'", (error, stdout) => {
+                if (error) {
+                    console.log(`Error fetching network info: ${error.message}`);
+                    return res.json({ message: 'Error fetching network info' });
+                }
+            
+                const ipAddress = stdout.trim().replace('addr:', '');
+                res.json({
+                    ipAddress,
+                    isEthernetConnected
+                });
+            });
+        }
+        else {
+            res.json({
+                ipAddress: null,
+                isEthernetConnected
+            });
+        }
+    });
+});
+
+
 app.get('/api/device-status', (req, res) => {
     exec("ifconfig wlan0 | grep 'inet ' | awk '{print $2}'", (error, stdout) => {
         if (error) {

@@ -1,21 +1,37 @@
 function loadStatusPage() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
+        
         <div id="networkInfo" class="sub-content-area">
-            <h2>Network Information</h2>
-            <label id="networkData">Loading network data...</label>
+            <div class="sub-content-area-header">Network Information</div>
+            
+            <label class="icon-label">
+                <img src="images/ethernet-icon.png" alt="Icon" />
+                <label id="ethernetData">Loading network data...</label>
+            </label>
+
+            <label class="icon-label">
+                <img src="images/wi-fi-icon.png" alt="Icon" />
+                <label id="wifiData"></label>
+            </label>
+
+            <label class="icon-label">
+                <img src="images/internet-sharing.svg" alt="Icon" />
+                <label id="internetSharing"></label>
+            </label>
+        </div>
+
+        <div id="vpnInfo" class="sub-content-area">
+            <div class="sub-content-area-header">VPN Status</div>
+            <label id="VPNData">Loading VPN data...</label>
+            <div id="vpnStatusLed" class="status-led"></div>
         </div>
         <div id="statsInfo" class="sub-content-area">
-            <h2>Statistics</h2>
+            <div class="sub-content-area-header">Device Statistics</div>
             <ul id="statsData">Loading statistics...</ul>
             <div class="chart-container">
                 <canvas id="cpuUsageChart"></canvas>
             </div>
-        </div>
-        <div id="vpnInfo" class="sub-content-area">
-            <h2>VPN Status</h2>
-            <label id="VPNData">Loading VPN data...</label>
-            <div id="vpnStatusLed" class="status-led"></div>
         </div>
 
         <button id="restartButton" type="button" class="btn btn-primary mt-4">Restart Device</button>
@@ -50,13 +66,32 @@ function loadStatusPage() {
         }
     });
 
-    // ************** Device Status
+    // ************** Device and Network Status
     function updateDeviceStatus() {
+
+        fetch('/api/network-status')
+            .then(response => response.json())
+            .then(data => {
+                if(data.isEthernetConnected){
+                    document.getElementById('ethernetData').textContent = `Ethernet Connected. IP Address: ${data.ipAddress}`;
+                }
+                else{
+                    document.getElementById('ethernetData').textContent = `Ethernet Not Connected!`;
+                }
+            })
+            .catch(error => console.error('Error fetching device status:', error));
+
+
+        fetch('/api/connected-devices')
+            .then(response => response.json())
+            .then(devices => {
+                document.getElementById('wifiData').textContent = `Number of connected devices: ${devices.length}`;
+        })
+        .catch(error => console.error("Couldn't get the device list:", error));
+
         fetch('/api/device-status')
             .then(response => response.json())
             .then(data => {
-                document.getElementById('networkData').textContent = 
-                    `IP Address: ${data.ipAddress}`;
                 const statsData = document.getElementById("statsData");
                 statsData.innerHTML = '';
 
@@ -86,23 +121,29 @@ function loadStatusPage() {
             })
             .catch(error => console.error('Error fetching device status:', error));
     }
+    fetch('/api/wifiConfig')
+        .then(response => response.json())
+        .then(data => {
+            if(data.InternetStatus == "enabled"){
+                document.getElementById('internetSharing').textContent = `Internet Sharing Enabled.`;
+            }
+            else {
+                document.getElementById('internetSharing').textContent = `Internet Sharing Disabled!`;
+            }
+        })
+        .catch(error => console.error('Error fetching configuration:', error));
 
     updateDeviceStatus();
     window.intervalID_cpu = setInterval(updateDeviceStatus, 1000);
 
-    // ************** Restart Button
-    // Restart button click handler with confirmation
-    document.getElementById('restartButton').addEventListener('click', function () {
-        if (confirm('Are you sure you want to restart the device?')) {
-            fetch('/api/restart', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('message').textContent = 'Device restarting...';
-                    setTimeout(() => { document.getElementById('message').textContent = ''; }, 3000);
-                })
-                .catch(error => console.error('Error restarting device:', error));
-        }
-    });
+
+    fetch('/api/vpn-status')  // API'den VPN durumu bilgisi almak
+        .then(response => response.json())
+        .then(data => {
+            updateVPNStatus(data.isConnected);  // Bağlantı durumu true/false
+        })
+        .catch(error => console.error('Cannot get VPN status:', error));
+
 
     // ************** VPN
     function updateVPNStatus(isConnected) {
@@ -127,6 +168,20 @@ function loadStatusPage() {
     window.intervalID_vpn = setInterval(checkVPNStatus, 1000); // Her 5 saniyede bir VPN durumunu kontrol et
     checkVPNStatus();
 
+
+    // ************** Restart Button
+    // Restart button click handler with confirmation
+    document.getElementById('restartButton').addEventListener('click', function () {
+        if (confirm('Are you sure you want to restart the device?')) {
+            fetch('/api/restart', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('message').textContent = 'Device restarting...';
+                    setTimeout(() => { document.getElementById('message').textContent = ''; }, 3000);
+                })
+                .catch(error => console.error('Error restarting device:', error));
+        }
+    });
 }
 
 loadStatusPage();

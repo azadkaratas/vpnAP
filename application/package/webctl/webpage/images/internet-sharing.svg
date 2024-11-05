@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 24 24" style="enable-background:new 0 0 24 24;" xml:space="preserve">
+<metadata>
+    <dc:creator>Davooda</dc:creator>
+    <dc:relation>https://davooda.com</dc:relation>
+</metadata>
+
+<style type="text/css">
+	.st0{fill:none;stroke:#1E1E1E;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st1{fill:none;stroke:#1E1E1E;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st2{fill:none;stroke:#1E1E1E;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st3{fill:#1E1E1E;}
+	.st4{fill:#FFFFFF;stroke:#1E1E1E;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st5{fill:none;stroke:#1E1E1E;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st6{fill:none;stroke:#010101;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+	.st7{fill:#010101;}
+	.st8{fill:none;stroke:#010101;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;}
+</style>
+<path class="st0" d="M12,22C6.5,22,2,17.5,2,12S6.5,2,12,2s10,4.5,10,10c0,0.8-0.1,1.6-0.3,2.4"/>
+<path class="st0" d="M12,22c-2.2,0-4-4.5-4-10S9.8,2,12,2s4,4.5,4,10"/>
+<line class="st0" x1="2" y1="12" x2="22" y2="12"/>
+<g>
+	<path class="st3" d="M17.1,16.3c-0.4-0.4-1-0.1-1,0.4v6.1c0,0.5,0.5,0.9,1,0.7l1.6-1.2h2.5c0.7,0,1-0.8,0.5-1.3L17.1,16.3z"/>
+</g>
+</svg>

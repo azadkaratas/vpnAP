@@ -2,10 +2,10 @@ function loadWifiSettingsPage() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         <div class="sub-content-area">
-            <h2>Wi-Fi Configuration</h2>
+            <div class="sub-content-area-header">Wi-Fi Configuration</div>
             <form id="wifiSettingsForm" class="mt-4">
                 <div class="form-group">
-                    <label for="wifiName">Name of the Wi-Fi network (SSID):</label>
+                    <label>Name of the Wi-Fi network (SSID):</label>
                     <input type="text" id="wifiName" name="wifiName" class="form-control">
                 </div>
                 <div class="form-group mt-3">
@@ -24,7 +24,7 @@ function loadWifiSettingsPage() {
             <div id="message" class="message mt-3"></div>
         </div>
         <div class="sub-content-area">
-            <h2>Connected Devices</h2>
+            <div class="sub-content-area-header">Connected Devices</div>
             <ul id="deviceList"></ul>
         </div>
     `;

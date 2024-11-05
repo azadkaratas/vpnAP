@@ -69,12 +69,25 @@ body, html {
     padding: 30px;
 }
 
+.sub-content-area-header {
+    background-color: #c5cfd9;
+    padding: 20px;
+    margin: -20px -20px 20px -20px;
+    font-size: 25px;
+    font-weight: bold;
+}
 .sub-content-area {
     background-color: #ffffff;
-    padding: 30px;
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0px 6px 6px 6px rgba(0, 0, 0, 0.2);
-    margin-bottom: 15px;
+    margin-bottom: 40px;
+    font-size: 20px;  
+    display: flex;
+    flex-direction: column;
+}
+.sub-content-area label {
+    margin-bottom: 10px;
 }
 
 h2 {
@@ -167,14 +180,6 @@ button:hover {
     background-color: #0056b3;
 }
 
-.info-box {
-    background-color: #e9ecef;
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
 .chart-container {
     width: 50%;
     min-width: 400px; 
@@ -196,4 +201,15 @@ canvas {
 }
 .led-red {
     background-color: red;
+}
+
+.icon-label {
+    display: flex;
+    align-items: center; 
+    margin-bottom: 20px;
+}
+
+.icon-label img {
+    height: 60px;
+    margin-right: 25px;
 }
