@@ -2,7 +2,7 @@ function loadStatusPage() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         
-        <div id="networkInfo" class="sub-content-area">
+        <div id="networkInfo" class="sub-content-area" style="display:flow-root;">
             <div class="sub-content-area-header">Network Information</div>
             
             <label class="icon-label">
@@ -19,6 +19,10 @@ function loadStatusPage() {
                 <img src="images/internet-sharing.svg" alt="Icon" />
                 <label id="internetSharing"></label>
             </label>
+
+            <button id="checkInternetConnectionButton" type="button" class="btn btn-primary mt-4" style="margin-top:20px;">Check Internet Connection</button>
+            <button id="internetSpeedTestButton" type="button" class="btn btn-primary mt-4" style="margin-top:20px;">Internet Speed Test</button>
+            <div id="messageArea" class="message mt-3"></div>
         </div>
 
         <div id="vpnInfo" class="sub-content-area">
@@ -35,6 +39,15 @@ function loadStatusPage() {
         </div>
 
         <button id="restartButton" type="button" class="btn btn-primary mt-4">Restart Device</button>
+
+
+        <!-- Hidden Popup -->
+        <div id="popup" class="popup">
+            <div class="popup-content">
+                <p id="popup-text"></p>
+                <button id="popupCancelBtn">Cancel</button>
+            </div>
+        </div>
     `;
 
     // ************** CPU Usage Chart
@@ -68,7 +81,6 @@ function loadStatusPage() {
 
     // ************** Device and Network Status
     function updateDeviceStatus() {
-
         fetch('/api/network-status')
             .then(response => response.json())
             .then(data => {
@@ -79,15 +91,14 @@ function loadStatusPage() {
                     document.getElementById('ethernetData').textContent = `Ethernet Not Connected!`;
                 }
             })
-            .catch(error => console.error('Error fetching device status:', error));
-
+            .catch(error => console.error('Error fetching network-status:', error));
 
         fetch('/api/connected-devices')
             .then(response => response.json())
             .then(devices => {
                 document.getElementById('wifiData').textContent = `Number of connected devices: ${devices.length}`;
         })
-        .catch(error => console.error("Couldn't get the device list:", error));
+        .catch(error => console.error("Error fetching connected-devices:", error));
 
         fetch('/api/device-status')
             .then(response => response.json())
@@ -119,8 +130,9 @@ function loadStatusPage() {
 
                 cpuUsageChart.update();
             })
-            .catch(error => console.error('Error fetching device status:', error));
+            .catch(error => console.error('Error fetching device-status:', error));
     }
+
     fetch('/api/wifiConfig')
         .then(response => response.json())
         .then(data => {
@@ -131,11 +143,45 @@ function loadStatusPage() {
                 document.getElementById('internetSharing').textContent = `Internet Sharing Disabled!`;
             }
         })
-        .catch(error => console.error('Error fetching configuration:', error));
+        .catch(error => console.error('Error fetching wifiConfig:', error));
 
     updateDeviceStatus();
-    window.intervalID_cpu = setInterval(updateDeviceStatus, 1000);
+    window.timerUpdateDeviceStatus = setInterval(updateDeviceStatus, 1000);
 
+    // ************** checkInternetConnectionButton
+    document.getElementById('checkInternetConnectionButton').addEventListener('click', function () {
+        const popup = document.getElementById("popup");
+        const popup_text = document.getElementById("popup-text");
+        
+        popup.style.display = "flex";
+        popup_text.textContent = "Pinging 8.8.8.8";
+
+        fetch('/api/checkInternet')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('messageArea').textContent = data.message;
+                setTimeout(() => { document.getElementById('messageArea').textContent = ''; }, 5000);
+                popup.style.display = "none";
+            })
+            .catch(error => console.error('Error fetching checkInternet:', error));
+        setTimeout(function() {
+            popup.style.display = "none";
+        }, 5000); 
+    });
+
+    // ************** internetSpeedTestButton
+    document.getElementById('internetSpeedTestButton').addEventListener('click', function () {
+        const popup = document.getElementById("popup");
+        const popup_text = document.getElementById("popup-text");
+        
+        popup.style.display = "flex";
+        popup_text.textContent = "Measuring internet speed. Please wait 10 sn...";
+    });
+
+    document.getElementById("popupCancelBtn").addEventListener("click", function() {
+        const popup = document.getElementById("popup");
+        popup.style.display = "none";
+    });
 
     fetch('/api/vpn-status')  // API'den VPN durumu bilgisi almak
         .then(response => response.json())

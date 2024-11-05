@@ -9,7 +9,7 @@ function loadWifiSettingsPage() {
                     <input type="text" id="wifiName" name="wifiName" class="form-control">
                 </div>
                 <div class="form-group mt-3">
-                    <label for="ipAddress">Wifi Password:</label>
+                    <label for="ipAddress">Wi-Fi Password:</label>
                     <input type="text" id="wifiPassword" name="wifiPassword" class="form-control">
                 </div>
                 <div class="form-group mt-3">
@@ -48,6 +48,19 @@ function loadWifiSettingsPage() {
             WifiPassword: document.getElementById('wifiPassword').value,
             InternetStatus: document.getElementById('internetStatus').value
         };
+
+        if(document.getElementById('wifiPassword').value.length < 8 || document.getElementById('wifiPassword').value.length > 63){
+            document.getElementById('message').textContent = 'Wi-Fi password length should be between [8, 63].'; 
+            return;
+        }
+        if(document.getElementById('wifiName').value.length < 1 || document.getElementById('wifiName').value.length > 32){
+            document.getElementById('message').textContent = 'Wi-Fi password length should be between [1, 32].'; 
+            return;
+        }
+        if(document.getElementById('internetStatus').value != "enabled" && document.getElementById('internetStatus').value != "disabled"){
+            document.getElementById('message').textContent = 'Bad internet sharing value!'; 
+            return;
+        }
 
         fetch('/api/wifiConfig', {
             method: 'POST',

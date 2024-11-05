@@ -29,6 +29,7 @@ app.post('/api/wifiConfig', (req, res) => {
 
     // Define paths
     const configPath = '/usr/html/config.json';
+    const hostapdPath = '/etc/hostapd.conf';
 
     // Prepare config.json data
     const newConfig = {
@@ -43,38 +44,42 @@ app.post('/api/wifiConfig', (req, res) => {
             console.error("Error writing config.json:", err);
             return res.status(500).json({ message: 'Error writing config file' });
         }
-        console.log("Wi-Fi Configuration updated successfully.");
-        res.json({ message: 'Configuration updated successfully' });
-    });
-});
 
-
-var bus = DBus.getBus('system');
-const serviceName = "com.embedlinux.messenger";
-const objectPath = "/com/embedlinux/messenger";
-const interfaceName = "com.embedlinux.web";
-
-app.post('/api/calculate', (req, res) => {
-    const value1 = req.body.value1;
-    const value2 = req.body.value2;
-
-    bus.getInterface(serviceName, objectPath, interfaceName, (err, iface) => {
-        if (err) {
-            return res.status(500).send({ error: "Error getting interface:", err });
-        }
-    
-        if (!iface.add_numbers) {
-            return res.status(500).send({ error: "Method add_numbers not found on interface:", err });
-        }
-    
-        iface.add_numbers(value1, value2, (err, result) => {
-        if (err) {
-          return res.status(500).send({ error: "Error calling method:", err });
-        }
-    
-        console.log("Result from server:", result);
-        res.send({ result });
+        fs.readFile(hostapdPath, 'utf8', (err, data) => {
+            if (err) {
+                console.error(`Error at reading file: ${err}`);
+                return;
+            }
+            let updatedData = data.replace(/(ssid=).*/g, `ssid=${WifiName}`)
+                                  .replace(/(wpa_passphrase=).*/g, `wpa_passphrase=${WifiPassword}`);
+            fs.writeFile(hostapdPath, updatedData, 'utf8', (err) => {
+                if (err) {
+                    console.error(`Error at file write: ${err}`);
+                } else {
+                    console.log('hostapd file updated successfully.');
+                }
+            });
         });
+
+        if(InternetStatus == "Enabled"){
+            exec("echo 1 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    return;
+                }
+            });
+        }
+        else{
+            exec("echo 0 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    return;
+                }
+            });
+        }
+
+        console.log("Wi-Fi Configuration updated successfully.");
+        res.json({ message: 'Wi-Fi Configuration updated successfully' });
     });
 });
 
@@ -213,6 +218,16 @@ app.get('/api/connected-devices', (req, res) => {
 
         registeredIPs.forEach(value => leases.push(value));
         res.json(leases);
+    });
+});
+
+app.get('/api/checkInternet', (req, res) => {
+    exec('ping -c 1 8.8.8.8', (error, stdout, stderr) => {
+        if (error) {
+            return res.json({ message: 'No internet connection found!' });
+        } else {
+            return res.json({ message: 'Internet connection found.' });
+        }
     });
 });
 
