@@ -161,18 +161,21 @@ app.get('/api/device-status', (req, res) => {
                             console.error(`Command stderr: ${stderr}`);
                             return res.status(500).json({ message: 'Command error', details: stderr });
                         }
-
                         const outputLines = stdout.trim().split(/\s+/);
                         const diskUsagePercentage = outputLines[4].replace('%', '');
                         const diskFreeSpace = outputLines[2];
-                        
-                        res.json({
-                            ipAddress,
-                            uptime,
-                            cpuUsage,
-                            memoryUsage,
-                            diskUsagePercentage,
-                            diskFreeSpace
+
+                        exec("cat /sys/class/thermal/thermal_zone0/temp", (error, stdout) => {
+                            const cpuTemperature = stdout.trim();
+                            res.json({
+                                ipAddress,
+                                uptime,
+                                cpuUsage,
+                                memoryUsage,
+                                diskUsagePercentage,
+                                diskFreeSpace,
+                                cpuTemperature
+                            });
                         });
                     });
                 });

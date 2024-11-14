@@ -118,6 +118,9 @@ function loadStatusPage() {
                 const listItem4 = document.createElement("li");
                 listItem4.textContent = `CPU Usage: ${data.cpuUsage}%`;                
                 statsData.appendChild(listItem4);
+                const listItem5 = document.createElement("li");
+                listItem5.textContent = `CPU Temperature: ${parseInt(data.cpuTemperature)/1000} °C`;                
+                statsData.appendChild(listItem5);
 
                 const cpuUsage = data.cpuUsage;
                 cpuUsageData.push(cpuUsage);
