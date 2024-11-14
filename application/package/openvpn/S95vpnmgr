@@ -1,0 +1,67 @@
+#!/bin/sh
+
+VPN_CONFIG="/etc/openvpn/tr51.nordvpn.com.udp1194.ovpn"
+AUTH_FILE="/etc/openvpn/auth.txt"
+PID_FILE="/var/run/openvpn.pid"
+TUN_IF="tun0"
+ETH_IF="eth0"
+
+start() {
+    echo "Starting OpenVPN..."
+    
+    modprobe tun
+
+    echo "Configuring NAT..."
+    iptables -t nat -A POSTROUTING -o "$TUN_IF" -j MASQUERADE
+    iptables -A FORWARD -i "$TUN_IF" -o "$ETH_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT
+    iptables -A FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
+
+    start-stop-daemon --start -q -b -m -p "$PID_FILE" --exec /usr/sbin/openvpn -- \
+        --config "$VPN_CONFIG" --auth-user-pass "$AUTH_FILE"
+}
+
+stop() {
+    echo "Stopping OpenVPN..."
+
+    start-stop-daemon --stop -q -p "$PID_FILE"
+
+    echo "Clearing NAT configuration..."
+    iptables -t nat -D POSTROUTING -o "$TUN_IF" -j MASQUERADE
+    iptables -D FORWARD -i "$TUN_IF" -o "$ETH_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT
+    iptables -D FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
+
+    rm -f "$PID_FILE"
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+status() {
+    if [ -e "$PID_FILE" ] && ps -p $(cat "$PID_FILE") > /dev/null; then
+        echo "OpenVPN is running."
+    else
+        echo "OpenVPN is not running."
+    fi
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart)
+        restart
+        ;;
+    status)
+        status
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

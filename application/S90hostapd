@@ -6,6 +6,7 @@ case $1 in
 	start-stop-daemon --start -q -p /var/run/hostapd.pid --exec hostapd /etc/hostapd.conf &
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+	ntpd -q -g # Update time
 	[ $? = 0 ] && echo "OK" || echo "FAIL"
 	;;
     stop)

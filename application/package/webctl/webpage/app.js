@@ -61,7 +61,7 @@ app.post('/api/wifiConfig', (req, res) => {
             });
         });
 
-        if(InternetStatus == "Enabled"){
+        if(InternetStatus == "enabled"){
             exec("echo 1 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
                 if (error) {
                     console.error(`exec error: ${error}`);
