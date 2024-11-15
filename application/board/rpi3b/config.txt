@@ -31,3 +31,27 @@ dtoverlay=dwc2
 
 # enable 64bits support
 arm_64bit=1
+
+# disable HDMI and Bluetooth (saves power)
+dtoverlay=vc4-kms-v3d,nohdmi,disable-bt
+max_framebuffers=1
+disable_fw_kms_setup=1
+disable_overscan=1
+
+# disable composite video output
+enable_tvout=0
+
+# Disable the PWR LED
+dtparam=pwr_led_trigger=none
+dtparam=pwr_led_activelow=off
+
+# Disable the Activity LED
+dtparam=act_led_trigger=none
+dtparam=act_led_activelow=off
+
+# Disable ethernet port LEDs
+dtparam=eth_led0=4
+dtparam=eth_led1=4
+
+arm_freq=700
+core_freq=250
