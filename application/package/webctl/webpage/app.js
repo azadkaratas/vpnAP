@@ -197,21 +197,20 @@ app.get('/api/connected-devices', (req, res) => {
             return res.status(500).json({ message: "Couldn't read DHCP file" });
         }
 
-
         const leases = [];
         const registeredIPs = new Map();
-        const leaseBlocks = data.split('lease ').slice(1); // ilk kısmı ayır
+        const leaseBlocks = data.split('lease ').slice(1);
 
         leaseBlocks.forEach(block => {
             const lines = block.trim().split('\n');
             const lease = {};
 
-            lease.ip = lines[0].trim().split(' ')[0]; // IP adresini al
+            lease.ip = lines[0].trim().split(' ')[0];
             lines.forEach(line => {
                 if (line.includes('client-hostname')) {
-                    lease.hostname = line.split('"')[1]; // Hostname'i al
+                    lease.hostname = line.split('"')[1];
                 } else if (line.includes('binding state active')) {
-                    lease.active = true; // Aktif durumu
+                    lease.active = true;
                 }
             });
             if (lease.active) {
@@ -231,6 +230,22 @@ app.get('/api/checkInternet', (req, res) => {
         } else {
             return res.json({ message: 'Internet connection found.' });
         }
+    });
+});
+
+app.get('/network_speed_stats', (req, res) => {
+    fs.readFile('/tmp/network_speed_stats.txt', 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).send("Couldn't read network_speed_stats file");
+        }
+        
+        const lines = data.trim().split('\n');
+        const stats = lines.map(line => {
+            const [download, upload] = line.split(',');
+            return { download: parseFloat(download), upload: parseFloat(upload) };
+        });
+        
+        res.json({ stats });
     });
 });
 

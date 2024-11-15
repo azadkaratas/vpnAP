@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case $1 in
+    start)
+	printf "Starting network_speedtest: "
+	start-stop-daemon --start --background -p /var/run/network_speedtest.pid --exec /usr/bin/network_speedtest
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    stop)
+	printf "Stopping network_speedtest: "
+	start-stop-daemon -K -q -p /var/run/network_speedtest.pid
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac

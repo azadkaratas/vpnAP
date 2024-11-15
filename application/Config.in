@@ -1,6 +1,7 @@
 menu "Target packages"
     source "$BR2_EXTERNAL_APPLICATION_PATH/package/webctl/Config.in"
     source "$BR2_EXTERNAL_APPLICATION_PATH/package/messenger/Config.in"
+    source "$BR2_EXTERNAL_APPLICATION_PATH/package/network_speedtest/Config.in"
 endmenu
 
 menu "Select the board"

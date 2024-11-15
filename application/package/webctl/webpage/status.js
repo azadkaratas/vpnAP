@@ -36,6 +36,10 @@ function loadStatusPage() {
             <div class="chart-container">
                 <canvas id="cpuUsageChart"></canvas>
             </div>
+            <br>
+            <div class="chart-container">
+                <canvas id="networkSpeedChart"></canvas>
+            </div>
         </div>
 
         <button id="restartButton" type="button" class="btn btn-primary mt-4">Restart Device</button>
@@ -79,6 +83,48 @@ function loadStatusPage() {
         }
     });
 
+    const ctx2 = document.getElementById('networkSpeedChart').getContext('2d');
+    const networkSpeedChart = new Chart(ctx2, {
+        type: 'line',
+        data: {
+            labels: Array.from({ length: 60 }, (_, i) => `${-60 + i}`),
+            datasets: [
+                {
+                    label: 'Upload (Mbps)',
+                    data: [],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: true,
+                },
+                {
+                    label: 'Download (Mbps)',
+                    data: [],
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: true,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Speed (Mbps)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Time (second)'
+                    }
+                }
+            }
+        }
+    });
+
     // ************** Device and Network Status
     function updateDeviceStatus() {
         fetch('/api/network-status')
@@ -92,6 +138,20 @@ function loadStatusPage() {
                 }
             })
             .catch(error => console.error('Error fetching network-status:', error));
+
+        fetch('/network_speed_stats')
+            .then(response => response.json())
+            .then(data => {
+                data.stats.forEach((stat, index) => {
+                    const downloadData = data.stats.map(stat => stat.download);
+                    const uploadData = data.stats.map(stat => stat.upload);
+
+                    networkSpeedChart.data.datasets[0].data = downloadData;
+                    networkSpeedChart.data.datasets[1].data = uploadData;                    
+                    networkSpeedChart.update();
+                });
+            })
+            .catch(error => console.error('Error fetching network_speed_stats:', error));
 
         fetch('/api/connected-devices')
             .then(response => response.json())
