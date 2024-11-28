@@ -21,15 +21,23 @@ function loadStatusPage() {
             </label>
 
             <button id="checkInternetConnectionButton" type="button" class="btn btn-primary mt-4" style="margin-top:20px;">Check Internet Connection</button>
-            <button id="internetSpeedTestButton" type="button" class="btn btn-primary mt-4" style="margin-top:20px;">Internet Speed Test</button>
-            <div id="messageArea" class="message mt-3"></div>
+            <div id="messageArea" class="message mt-3" style="display: none;"></div>
         </div>
 
         <div id="vpnInfo" class="sub-content-area">
             <div class="sub-content-area-header">VPN Status</div>
-            <label id="VPNData">Loading VPN data...</label>
-            <div id="vpnStatusLed" class="status-led"></div>
+            <label id="vpnIpInfo" class="icon-label">
+                <img src="images/ip.png" alt="Icon" />
+                <label>IP Address:&nbsp;</label><label id="currentIP" ></label>
+            </label>
+
+            <label class="icon-label">
+                <img src="images/shield.png" alt="Icon" />
+                <label>Status:&nbsp;</label><label id="vpnConnectionStatus"></label> 
+                &nbsp;<div id="vpnStatusLed" class="status-led"></div
+            </label>
         </div>
+
         <div id="statsInfo" class="sub-content-area">
             <div class="sub-content-area-header">Device Statistics</div>
             <ul id="statsData">Loading statistics...</ul>
@@ -157,8 +165,8 @@ function loadStatusPage() {
             .then(response => response.json())
             .then(devices => {
                 document.getElementById('wifiData').textContent = `Number of connected devices: ${devices.length}`;
-        })
-        .catch(error => console.error("Error fetching connected-devices:", error));
+            })
+            .catch(error => console.error("Error fetching connected-devices:", error));
 
         fetch('/api/device-status')
             .then(response => response.json())
@@ -222,8 +230,12 @@ function loadStatusPage() {
         fetch('/api/checkInternet')
             .then(response => response.json())
             .then(data => {
+                document.getElementById('messageArea').style.display = 'inherit';
                 document.getElementById('messageArea').textContent = data.message;
-                setTimeout(() => { document.getElementById('messageArea').textContent = ''; }, 5000);
+                setTimeout(() => {
+                    document.getElementById('messageArea').textContent = ''; 
+                    document.getElementById('messageArea').style.display = 'none';
+                    }, 5000);
                 popup.style.display = "none";
             })
             .catch(error => console.error('Error fetching checkInternet:', error));
@@ -232,30 +244,8 @@ function loadStatusPage() {
         }, 5000); 
     });
 
-    // ************** internetSpeedTestButton
-    document.getElementById('internetSpeedTestButton').addEventListener('click', function () {
-        const popup = document.getElementById("popup");
-        const popup_text = document.getElementById("popup-text");
-        
-        popup.style.display = "flex";
-        popup_text.textContent = "Measuring internet speed. Please wait 10 sn...";
-    });
-
-    document.getElementById("popupCancelBtn").addEventListener("click", function() {
-        const popup = document.getElementById("popup");
-        popup.style.display = "none";
-    });
-
-    fetch('/api/vpn-status')  // API'den VPN durumu bilgisi almak
-        .then(response => response.json())
-        .then(data => {
-            updateVPNStatus(data.isConnected);  // Bağlantı durumu true/false
-        })
-        .catch(error => console.error('Cannot get VPN status:', error));
-
-
     // ************** VPN
-    function updateVPNStatus(isConnected) {
+    function updateVPNLedStatus(isConnected) {
         const vpnStatus = document.getElementById("vpnStatusLed");
         if (isConnected) {
             vpnStatus.classList.remove("led-red");
@@ -267,16 +257,24 @@ function loadStatusPage() {
     }
 
     function checkVPNStatus() {
-        fetch('/api/vpn-status')  // API'den VPN durumu bilgisi almak
+        fetch('/api/vpn-status')
             .then(response => response.json())
             .then(data => {
-                updateVPNStatus(data.isConnected);  // Bağlantı durumu true/false
+                updateVPNLedStatus(data.isConnected);
+                if(data.isConnected){
+                    document.getElementById('vpnIpInfo').style.display = 'inherit';
+                    document.getElementById('currentIP').innerText = data.ip;
+                    document.getElementById('vpnConnectionStatus').innerText = 'Connected to ' + data.city + '/' + data.country ;
+                }
+                else{
+                    document.getElementById('vpnIpInfo').style.display = 'none';
+                    document.getElementById('currentIP').innerText = '';
+                    document.getElementById('vpnConnectionStatus').innerText = 'Not connected!';
+                }
             })
             .catch(error => console.error('Cannot get VPN status:', error));
     }
-    window.intervalID_vpn = setInterval(checkVPNStatus, 1000); // Her 5 saniyede bir VPN durumunu kontrol et
     checkVPNStatus();
-
 
     // ************** Restart Button
     // Restart button click handler with confirmation

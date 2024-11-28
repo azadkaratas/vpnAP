@@ -184,10 +184,105 @@ app.get('/api/device-status', (req, res) => {
     });
 });
 
+// VPN
 
-app.get('/api/vpn-status', (req, res) => {
-    const isConnected = true;//checkVPNConnection();
-    res.json({ isConnected: isConnected });
+app.get('/api/get-vpn-auth-credentials', (req, res) => {
+    const authFilePath = '/etc/openvpn/auth.txt';
+    fs.readFile(authFilePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading auth.txt:', err);
+            return res.status(500).json({ error: 'Failed to read credentials' });
+        }
+        const [username, password] = data.split('\n');
+        res.json({ username: username.trim(), password: "secretPassword" });
+    });
+});
+
+app.get('/api/vpn-status', async (req, res) => {
+    const statusFilePath = '/tmp/openvpn/status';
+    try {
+        const response = await fetch('http://ip-api.com/json/');
+        const data = await response.json();
+        var isConnectedReadFromFile;
+
+        if (data.status === "success") {
+            try {
+                if (!fs.existsSync(statusFilePath)) {
+                    isConnectedReadFromFile = false;
+                }
+
+                const data = fs.readFileSync(statusFilePath, 'utf8').trim();
+                if (data === '1') {
+                    isConnectedReadFromFile = true;
+                } else {
+                    isConnectedReadFromFile = false;
+                }
+            } catch (error) {
+                isConnectedReadFromFile = false;
+            }
+            
+            res.json({
+                isConnected: isConnectedReadFromFile,
+                ip: data.query,
+                country: data.country,
+                city: data.city
+            });
+        } else {
+            res.status(500).json({ error: "Failed to fetch geolocation data." });
+        }
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching geolocation data." });
+    }
+});
+
+function runCommand(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(`Error executing command: ${error.message}`);
+            } else {
+                resolve({ stdout, stderr });
+            }
+        });
+    });
+}
+
+async function toggleVPN(ConnectOrDisconnect) {
+    try {
+        if (ConnectOrDisconnect) {
+            console.log('Starting VPN...');
+            const result = await runCommand('/etc/init.d/S95vpnmgr start &');
+            console.log('VPN started successfully:', result);
+        } else {
+            console.log('Stopping VPN...');
+            const result = await runCommand('/etc/init.d/S95vpnmgr stop &');
+            console.log('VPN stopped successfully:', result);
+        }
+
+        const statusFilePath = '/tmp/openvpn/status';
+
+        if (!fs.existsSync(statusFilePath)) {
+            console.error('Status file does not exist.');
+            throw new Error('Status file not found.');
+        }
+
+        const data = fs.readFileSync(statusFilePath, 'utf8').trim();
+        return data === '1';
+    } catch (error) {
+        console.error('Error toggling VPN:', error.message);
+        throw error;
+    }
+}
+
+app.post('/api/toggle-vpn', async (req, res) => {
+    const { ConnectOrDisconnect } = req.body;
+
+    try {
+        const connectionStatus = await toggleVPN(ConnectOrDisconnect);
+        return res.json({ connectionStatus });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
 });
 
 app.get('/api/connected-devices', (req, res) => {

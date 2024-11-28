@@ -1,14 +1,12 @@
 body, html {
+    width: -webkit-fill-available;
+    display: flex;
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
-    height: 100%;
-}
-
-.wrapper {
-    display: flex;
-    height: 100vh;
+    min-height: 100%;
+    min-width: 100%;
 }
 
 .sidebar {
@@ -58,22 +56,17 @@ body, html {
     background-color: #34495e;
 }
 
-.content {
-    flex-grow: 1;
-    padding: 0px;
-    background-color: #ffffff;
-}
-
 #content-area {
+    flex-grow: 1;
     background-color: #ffffff;
     padding: 30px;
 }
 
 .sub-content-area-header {
     background-color: #c5cfd9;
-    padding: 20px;
-    margin: -20px -20px 20px -20px;
-    font-size: 25px;
+    padding: 15px;
+    margin: -20px -20px 15px -20px;
+    font-size: 20px;
     font-weight: bold;
 }
 .sub-content-area {
@@ -81,13 +74,9 @@ body, html {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0px 6px 6px 6px rgba(0, 0, 0, 0.2);
-    margin-bottom: 40px;
-    font-size: 20px;  
+    margin-bottom: 25px;
     display: flex;
     flex-direction: column;
-}
-.sub-content-area label {
-    margin-bottom: 10px;
 }
 
 h2 {
@@ -97,12 +86,13 @@ h2 {
 
 .form-group {
     margin-bottom: 15px;
+    display: grid;
 }
 
 input[type="text"],
 input[type="number"],
+input[type="password"],
 select {
-    width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -112,6 +102,7 @@ select {
 
 input[type="text"]:focus,
 input[type="number"]:focus,
+input[type="password"]:focus,
 select:focus {
     border-color: #2980b9;
 }
@@ -209,8 +200,8 @@ canvas {
     margin-bottom: 20px;
 }
 .icon-label img {
-    height: 60px;
-    margin-right: 25px;
+    height: 40px;
+    margin-right: 15px;
 }
 
 .popup {

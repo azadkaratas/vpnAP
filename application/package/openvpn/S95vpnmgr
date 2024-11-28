@@ -3,6 +3,7 @@
 VPN_CONFIG="/etc/openvpn/tr51.nordvpn.com.udp1194.ovpn"
 AUTH_FILE="/etc/openvpn/auth.txt"
 PID_FILE="/var/run/openvpn.pid"
+VPN_STATUS_FILE="/tmp/openvpn/status"
 TUN_IF="tun0"
 ETH_IF="eth0"
 
@@ -18,6 +19,7 @@ start() {
 
     start-stop-daemon --start -q -b -m -p "$PID_FILE" --exec /usr/sbin/openvpn -- \
         --config "$VPN_CONFIG" --auth-user-pass "$AUTH_FILE"
+    mkdir -p /tmp/openvpn && echo 1 > $VPN_STATUS_FILE
 }
 
 stop() {
@@ -31,6 +33,7 @@ stop() {
     iptables -D FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
 
     rm -f "$PID_FILE"
+    mkdir -p /tmp/openvpn && echo 0 > $VPN_STATUS_FILE
 }
 
 restart() {
@@ -40,10 +43,16 @@ restart() {
 }
 
 status() {
-    if [ -e "$PID_FILE" ] && ps -p $(cat "$PID_FILE") > /dev/null; then
-        echo "OpenVPN is running."
+    if [ -e "$PID_FILE" ]; then
+        PID=$(cat "$PID_FILE")
+        if [ -d "/proc/$PID" ]; then
+            echo "VPN is running."
+        else
+            echo "VPN is not running."
+            rm -f "$PID_FILE"
+        fi
     else
-        echo "OpenVPN is not running."
+        echo "VPN is not running."
     fi
 }
 

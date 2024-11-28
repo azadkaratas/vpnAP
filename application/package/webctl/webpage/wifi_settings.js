@@ -10,7 +10,7 @@ function loadWifiSettingsPage() {
                 </div>
                 <div class="form-group mt-3">
                     <label for="ipAddress">Wi-Fi Password:</label>
-                    <input type="text" id="wifiPassword" name="wifiPassword" class="form-control">
+                    <input type="password" id="wifiPassword" name="wifiPassword" class="form-control">
                 </div>
                 <div class="form-group mt-3">
                     <label for="internetStatus">Internet Sharing:</label>
@@ -21,7 +21,7 @@ function loadWifiSettingsPage() {
                 </div>
                 <button type="submit" class="btn btn-primary mt-4">Save Configuration</button>
             </form>
-            <div id="message" class="message mt-3"></div>
+            <div id="message" class="message mt-3" style="display: none;"></div>
         </div>
         <div class="sub-content-area">
             <div class="sub-content-area-header">Connected Devices</div>
@@ -69,8 +69,12 @@ function loadWifiSettingsPage() {
         })
         .then(response => response.json())
         .then(data => {
+            document.getElementById('message').style.display = 'inherit';
             document.getElementById('message').textContent = data.message;
-            setTimeout(() => { document.getElementById('message').textContent = ''; }, 3000);
+            setTimeout(() => {
+                document.getElementById('message').textContent = ''; 
+                document.getElementById('message').style.display = 'none';
+                }, 3000);
         })
         .catch(error => console.error('Error updating configuration:', error));
     });
