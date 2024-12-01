@@ -18,7 +18,7 @@ app.get('/api/wifiConfig', (req, res) => {
         const config = JSON.parse(configData);
         res.json({
             WifiName: config.WifiName,
-            WifiPassword: config.WifiPassword,
+            WifiPassword: "secretPassword",
             InternetStatus: config.InternetStatus
         });
     });
@@ -128,7 +128,6 @@ app.get('/api/network-status', (req, res) => {
     });
 });
 
-
 app.get('/api/device-status', (req, res) => {
     exec("ifconfig wlan0 | grep 'inet ' | awk '{print $2}'", (error, stdout) => {
         if (error) {
@@ -185,7 +184,6 @@ app.get('/api/device-status', (req, res) => {
 });
 
 // VPN
-
 app.get('/api/get-vpn-auth-credentials', (req, res) => {
     const authFilePath = '/etc/openvpn/auth.txt';
     fs.readFile(authFilePath, 'utf8', (err, data) => {
@@ -196,6 +194,28 @@ app.get('/api/get-vpn-auth-credentials', (req, res) => {
         const [username, password] = data.split('\n');
         res.json({ username: username.trim(), password: "secretPassword" });
     });
+});
+
+app.post('/api/set-vpn-auth-credentials', (req, res) => {
+    const { vpnUsername, vpnPassword} = req.body;
+    const authFilePath = '/etc/openvpn/auth.txt';
+
+    try {
+        // Create the directory if it doesn't exist
+        const authDir = path.dirname(authFilePath);
+        if (!fs.existsSync(authDir)) {
+            fs.mkdirSync(authDir, { recursive: true });
+        }
+
+        // Write credentials to the file
+        const credentials = `${vpnUsername}\n${vpnPassword}\n`; // Username and password, each on a new line
+        fs.writeFileSync(authFilePath, credentials, { mode: 0o600 }); // Secure file with 600 permissions
+
+        res.json({ message: 'VPN configuration updated successfully' });
+    } catch (error) {
+        console.error('Error writing to auth file:', error);
+        res.status(500).json({ error: 'Failed to update VPN configuration.' });
+    }
 });
 
 app.get('/api/vpn-status', async (req, res) => {

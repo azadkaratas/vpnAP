@@ -54,7 +54,7 @@ function loadWifiSettingsPage() {
             return;
         }
         if(document.getElementById('wifiName').value.length < 1 || document.getElementById('wifiName').value.length > 32){
-            document.getElementById('message').textContent = 'Wi-Fi password length should be between [1, 32].'; 
+            document.getElementById('message').textContent = 'Wi-Fi name length should be between [1, 32].'; 
             return;
         }
         if(document.getElementById('internetStatus').value != "enabled" && document.getElementById('internetStatus').value != "disabled"){

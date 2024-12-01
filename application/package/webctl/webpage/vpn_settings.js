@@ -28,6 +28,8 @@ function loadVPNSettingsPage() {
 
                 <button type="submit" class="btn btn-primary mt-4">Save Configuration</button>
             </form>
+            <div id="message" class="message mt-3" style="display: none;"></div>
+
             <hr>
             <div class="mt-4">
                 <button id="toggleVPNButton" class="btn btn-secondary">Toggle VPN</button>
@@ -62,6 +64,40 @@ function loadVPNSettingsPage() {
     // Attach toggle VPN button event
     const toggleVPNButton = document.getElementById('toggleVPNButton');
     toggleVPNButton.addEventListener('click', toggleVPN);
+
+    // Submit form handler
+    document.getElementById('vpnSettingsForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const VPNConfigData = {
+            vpnUsername: document.getElementById('vpnUsername').value,
+            vpnPassword: document.getElementById('vpnPassword').value
+        };
+
+        if(document.getElementById('vpnUsername').value.length < 1 || document.getElementById('vpnUsername').value.length > 32){
+            document.getElementById('message').textContent = 'VPN username length should be between [1, 32].'; 
+            return;
+        }
+        if(document.getElementById('vpnPassword').value.length < 8 || document.getElementById('vpnPassword').value.length > 63){
+            document.getElementById('message').textContent = 'VPN password length should be between [8, 63].'; 
+            return;
+        }
+        fetch('/api/set-vpn-auth-credentials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(VPNConfigData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').textContent = data.message;
+            setTimeout(() => {
+                document.getElementById('message').textContent = ''; 
+                document.getElementById('message').style.display = 'none';
+                }, 3000);
+        })
+        .catch(error => console.error('Error updating configuration:', error));
+    });
 }
 
 var isVpnConnected = false;
