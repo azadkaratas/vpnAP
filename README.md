@@ -1,8 +1,13 @@
 # vpnAP
 
+### How to Build Project:
 
-To enable internet access:
-echo 1 > /proc/sys/net/ipv4/ip_forward
-
-To disable:
-echo 0 > /proc/sys/net/ipv4/ip_forward
+Simply execute below commands:
+```
+git submodule update --init --recursive
+sudo apt-get install libncurses-dev
+cd buildroot
+make BR2_EXTERNAL=../application menuconfig  --- Enter menuconfig and press ESC to quit
+cd ..
+make vpn --- Build the project
+```

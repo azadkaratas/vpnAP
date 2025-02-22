@@ -24,3 +24,5 @@ cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/auth.txt ${TARGET_DIR}/etc/o
 
 rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn
+
+cp ${BR2_EXTERNAL_APPLICATION_PATH}/board/rpi3b/updatefw.sh ${TARGET_DIR}/usr/sbin/updatefw.sh
