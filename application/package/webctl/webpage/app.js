@@ -5,9 +5,11 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 var DBus = require('dbus');
+const multer = require('multer');
 
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
+
 // API endpoint to get current configuration
 app.get('/api/wifiConfig', (req, res) => {
     fs.readFile('/usr/html/config.json', 'utf8', (configErr, configData) => {
@@ -372,3 +374,45 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Set up multer for file uploads
+const upload = multer({
+    dest: '/tmp/', // Destination folder for uploaded files
+    limits: { fileSize: 400 * 1024 * 1024 } // Limit file size to 400MB
+});
+
+app.post("/api/upload", upload.single("file"), uploadSingle)
+
+function uploadSingle(req, res) {
+    if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // File information
+    const filePath = req.file.path;
+    const fileName = req.file.originalname;
+    if(fileName == "rootfs.ext4"){
+        // Move the file to the desired location if needed
+        const targetPath = path.join('/tmp/', fileName);
+        fs.rename(filePath, targetPath, (err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error moving file', error: err });
+            }
+        });
+    
+        exec('sh /usr/sbin/updatefw.sh', (error, stdout, stderr) => {
+            if (error) {
+                console.log(`Error updating firmware: ${error.message}`);
+                return res.json({ message: 'Error updating firmware' });
+            }
+            if (stderr) {
+                console.log(`Command stderr: ${stderr}`);
+                return res.json({ message: 'Command error' });
+            }
+            return res.json({ message: 'File uploaded successfully. Updating device. Please wait...', file: targetPath });
+        });
+    }
+    else{
+        return res.json({ message: 'Invalid file uploaded' });
+    }
+}

@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', function () {
         loadScript('vpn_settings.js');
     });
 
+    document.getElementById('updateFirmware').addEventListener('click', function (event) {
+        event.preventDefault();
+        clearInterval(window.timerUpdateDeviceStatus);
+        clearInterval(window.intervalID_vpn);
+        loadScript('update.js');
+    });
+
     loadScript('status.js');
     
 });
