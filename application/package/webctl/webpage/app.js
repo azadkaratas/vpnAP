@@ -10,78 +10,88 @@ const multer = require('multer');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
 
+// Define paths
+const configPath = '/data/config.json';
+
 // API endpoint to get current configuration
 app.get('/api/wifiConfig', (req, res) => {
-    fs.readFile('/usr/html/config.json', 'utf8', (configErr, configData) => {
+    fs.readFile(configPath, 'utf8', (configErr, configData) => {
         if (configErr) {
             console.error("Error reading config file!", configErr);
             return res.status(500).json({ message: 'Error reading config file' });
         }
         const config = JSON.parse(configData);
         res.json({
-            WifiName: config.WifiName,
-            WifiPassword: "secretPassword",
-            InternetStatus: config.InternetStatus
+            WifiName: config.wifi.name,
+            WifiPassword: config.wifi.password,
+            InternetStatus: config.wifi.internetStatus
         });
     });
 });
 
 app.post('/api/wifiConfig', (req, res) => {
     const { WifiName, WifiPassword, InternetStatus} = req.body;
-
-    // Define paths
-    const configPath = '/usr/html/config.json';
     const hostapdPath = '/etc/hostapd.conf';
 
-    // Prepare config.json data
-    const newConfig = {
-        WifiName: WifiName,
-        WifiPassword: WifiPassword,
-        InternetStatus: InternetStatus
-    };
-
-    // Write to config.json
-    fs.writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf8', (err) => {
-        if (err) {
-            console.error("Error writing config.json:", err);
-            return res.status(500).json({ message: 'Error writing config file' });
+    // Read the current configuration
+    fs.readFile(configPath, 'utf8', (configErr, configData) => {
+        if (configErr) {
+            console.error("Error reading config file!", configErr);
+            return res.status(500).json({ message: 'Error reading config file' });
         }
 
-        fs.readFile(hostapdPath, 'utf8', (err, data) => {
+        const config = JSON.parse(configData);
+
+        // Update only the wifi configuration
+        config.wifi = {
+            name: WifiName,
+            password: WifiPassword,
+            internetStatus: InternetStatus
+        };
+
+        // Write the updated config back to the config file
+        fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8', (err) => {
             if (err) {
-                console.error(`Error at reading file: ${err}`);
-                return;
+                console.error("Error writing config file!", err);
+                return res.status(500).json({ message: 'Error saving the config file' });
             }
-            let updatedData = data.replace(/(ssid=).*/g, `ssid=${WifiName}`)
-                                  .replace(/(wpa_passphrase=).*/g, `wpa_passphrase=${WifiPassword}`);
-            fs.writeFile(hostapdPath, updatedData, 'utf8', (err) => {
+
+            fs.readFile(hostapdPath, 'utf8', (err, data) => {
                 if (err) {
-                    console.error(`Error at file write: ${err}`);
-                } else {
-                    console.log('hostapd file updated successfully.');
+                    console.error(`Error at reading file: ${err}`);
+                    return;
                 }
+                let updatedData = data.replace(/(ssid=).*/g, `ssid=${WifiName}`)
+                                      .replace(/(wpa_passphrase=).*/g, `wpa_passphrase=${WifiPassword}`);
+                fs.writeFile(hostapdPath, updatedData, 'utf8', (err) => {
+                    if (err) {
+                        console.error(`Error at file write: ${err}`);
+                    } else {
+                        console.log('hostapd file updated successfully.');
+                    }
+                });
             });
+    
+            if(InternetStatus == "enabled"){
+                exec("echo 1 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`exec error: ${error}`);
+                        return;
+                    }
+                });
+            }
+            else{
+                exec("echo 0 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
+                    if (error) {
+                        console.error(`exec error: ${error}`);
+                        return;
+                    }
+                });
+            }
+    
+            console.log("Wi-Fi Configuration updated successfully.");
+            res.json({ message: 'Wi-Fi Configuration updated successfully' });
         });
-
-        if(InternetStatus == "enabled"){
-            exec("echo 1 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`exec error: ${error}`);
-                    return;
-                }
-            });
-        }
-        else{
-            exec("echo 0 > /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
-                if (error) {
-                    console.error(`exec error: ${error}`);
-                    return;
-                }
-            });
-        }
-
-        console.log("Wi-Fi Configuration updated successfully.");
-        res.json({ message: 'Wi-Fi Configuration updated successfully' });
     });
 });
 
@@ -187,37 +197,66 @@ app.get('/api/device-status', (req, res) => {
 
 // VPN
 app.get('/api/get-vpn-auth-credentials', (req, res) => {
-    const authFilePath = '/etc/openvpn/auth.txt';
-    fs.readFile(authFilePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('Error reading auth.txt:', err);
-            return res.status(500).json({ error: 'Failed to read credentials' });
+    fs.readFile(configPath, 'utf8', (configErr, configData) => {
+        if (configErr) {
+            console.error("Error reading config file!", configErr);
+            return res.status(500).json({ message: 'Error reading config file' });
         }
-        const [username, password] = data.split('\n');
-        res.json({ username: username.trim(), password: "secretPassword" });
+        const config = JSON.parse(configData);
+        res.json({
+            nordvpnUsername: config.vpn.nordvpn.username,
+            nordvpnPassword: config.vpn.nordvpn.vpnPassword,
+            nordvpnCountry: config.vpn.nordvpn.country
+        });
     });
 });
 
 app.post('/api/set-vpn-auth-credentials', (req, res) => {
-    const { vpnUsername, vpnPassword} = req.body;
+    const {vpnUsername, vpnPassword, vpnCountry} = req.body;
     const authFilePath = '/etc/openvpn/auth.txt';
 
-    try {
-        // Create the directory if it doesn't exist
-        const authDir = path.dirname(authFilePath);
-        if (!fs.existsSync(authDir)) {
-            fs.mkdirSync(authDir, { recursive: true });
+    // Read the current configuration
+    fs.readFile(configPath, 'utf8', (configErr, configData) => {
+        if (configErr) {
+            console.error("Error reading config file!", configErr);
+            return res.status(500).json({ message: 'Error reading config file' });
         }
 
-        // Write credentials to the file
-        const credentials = `${vpnUsername}\n${vpnPassword}\n`; // Username and password, each on a new line
-        fs.writeFileSync(authFilePath, credentials, { mode: 0o600 }); // Secure file with 600 permissions
+        const config = JSON.parse(configData);
 
-        res.json({ message: 'VPN configuration updated successfully' });
-    } catch (error) {
-        console.error('Error writing to auth file:', error);
-        res.status(500).json({ error: 'Failed to update VPN configuration.' });
-    }
+        // Update only the VPN configuration
+        config.vpn.nordvpn = {
+            username: vpnUsername,
+            vpnPassword: vpnPassword,
+            country: vpnCountry
+        };
+
+        // Write the updated config back to the config file
+        fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf8', (err) => {
+            if (err) {
+                console.error("Error writing config file!", err);
+                return res.status(500).json({ message: 'Error saving the config file' });
+            }
+
+            try {
+                // Create the directory if it doesn't exist
+                const authDir = path.dirname(authFilePath);
+                if (!fs.existsSync(authDir)) {
+                    fs.mkdirSync(authDir, { recursive: true });
+                }
+        
+                // Write credentials to the file
+                const credentials = `${vpnUsername}\n${vpnPassword}\n`; // Username and password, each on a new line
+                fs.writeFileSync(authFilePath, credentials, { mode: 0o600 }); // Secure file with 600 permissions        
+            } catch (error) {
+                console.error('Error writing to auth file:', error);
+                res.status(500).json({ error: 'Failed to update VPN configuration.' });
+            }
+        });
+    });
+
+    console.log("VPN configuration updated successfully.");
+    res.json({ message: 'VPN configuration updated successfully' });
 });
 
 app.get('/api/vpn-status', async (req, res) => {
@@ -350,7 +389,7 @@ app.get('/api/checkInternet', (req, res) => {
     });
 });
 
-app.get('/network_speed_stats', (req, res) => {
+app.get('/api/network_speed_stats', (req, res) => {
     fs.readFile('/tmp/network_speed_stats.txt', 'utf8', (err, data) => {
         if (err) {
             return res.status(500).send("Couldn't read network_speed_stats file");
@@ -399,18 +438,7 @@ function uploadSingle(req, res) {
                 return res.status(500).json({ message: 'Error moving file', error: err });
             }
         });
-    
-        exec('sh /usr/sbin/updatefw.sh', (error, stdout, stderr) => {
-            if (error) {
-                console.log(`Error updating firmware: ${error.message}`);
-                return res.json({ message: 'Error updating firmware' });
-            }
-            if (stderr) {
-                console.log(`Command stderr: ${stderr}`);
-                return res.json({ message: 'Command error' });
-            }
-            return res.json({ message: 'File uploaded successfully. Updating device. Please wait...', file: targetPath });
-        });
+        return res.json({ message: 'File uploaded successfully. Updating device. Please wait...', file: targetPath });
     }
     else{
         return res.json({ message: 'Invalid file uploaded' });

@@ -147,7 +147,7 @@ function loadStatusPage() {
             })
             .catch(error => console.error('Error fetching network-status:', error));
 
-        fetch('/network_speed_stats')
+        fetch('/api/network_speed_stats')
             .then(response => response.json())
             .then(data => {
                 data.stats.forEach((stat, index) => {

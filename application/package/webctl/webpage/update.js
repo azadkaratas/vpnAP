@@ -33,6 +33,16 @@ function loadUpdatePage() {
         .then(response => response.json())
         .then(data => {
             alert(data.message);
+            exec('sh /usr/bin/updatefw.sh &', (error, stdout, stderr) => {
+                if (error) {
+                    console.log(`Error updating firmware: ${error.message}`);
+                    return res.json({ message: 'Error updating firmware' });
+                }
+                if (stderr) {
+                    console.log(`Command stderr: ${stderr}`);
+                    return res.json({ message: 'Command error' });
+                }
+            });
         })
         .catch(error => {
             alert('Error uploading file.');

@@ -1,0 +1,116 @@
+#!/bin/sh
+
+# Reads saved user data from config.json file and copies to related files
+
+# Path to config.json
+CONFIG_FILE="/data/config.json"
+
+# Path to hostapd.conf
+HOSTAPD_CONF="/etc/hostapd.conf"
+
+# Path to VPN auth.txt
+VPN_AUTH_FILE="/etc/openvpn/auth.txt"
+
+update_hostapd_config(){
+	# Extract SSID and password from config.json using simple grep and cut
+    SSID=$(grep '"name":' "$CONFIG_FILE" | cut -d'"' -f4)
+    PASSWORD=$(grep '"password":' "$CONFIG_FILE" | cut -d'"' -f4)
+    
+    # Check if the SSID and password are valid
+    if [ -z "$SSID" ] || [ -z "$PASSWORD" ]; then
+        echo "Error: Could not read SSID or password from config.json"
+        return 1
+    fi
+    
+    # Update hostapd.conf with new SSID and password
+    sed -i "s/^ssid=.*/ssid=$SSID/" "$HOSTAPD_CONF"
+    sed -i "s/^wpa_passphrase=.*/wpa_passphrase=$PASSWORD/" "$HOSTAPD_CONF"
+
+	echo "Updated hostapd.conf with SSID: $SSID and password."
+}
+
+update_vpn_auth(){
+	# Extract VPN username and vpnPassword from config.json using simple grep and cut
+    USERNAME=$(grep '"username":' "$CONFIG_FILE" | cut -d'"' -f4)
+    VPNPASSWORD=$(grep '"vpnPassword":' "$CONFIG_FILE" | cut -d'"' -f4)
+    
+    # Check if the SSID and password are valid
+    if [ -z "$USERNAME" ] || [ -z "$VPNPASSWORD" ]; then
+        echo "Error: Could not read USERNAME or VPNPASSWORD from config.json"
+        return 1
+    fi
+    
+    # Update auth.txt with new USERNAME and VPNPASSWORD
+    echo $USERNAME > $VPN_AUTH_FILE
+    echo $VPNPASSWORD >> $VPN_AUTH_FILE
+
+	echo "Updated auth.txt with username: $USERNAME and password."
+}
+
+case $1 in
+    start)
+	printf "Starting initdevice: "
+
+	# Check if data /dev/mmcblk0p4 is mounted or not
+	if ! mountpoint -q /data; then
+		echo "/data is not mounted, mounting now..."
+
+		if [ ! -b /dev/mmcblk0p4 ]; then
+			echo "ERROR: /dev/mmcblk0p4 does not exist!"
+			exit 1
+		fi
+
+		# If it doesn't have file system
+		if ! blkid /dev/mmcblk0p4 | grep -q "UUID"; then
+			echo "Formatting /dev/mmcblk0p4 as ext4..."
+			mke2fs /dev/mmcblk0p4
+		fi
+
+		# Mount
+		mkdir -p /data
+		mount -t ext4 /dev/mmcblk0p4 /data
+
+		# Check if success
+		if mountpoint -q /data; then
+			echo "/data mounted successfully."
+		else
+			echo "ERROR: Failed to mount /dev/mmcblk0p4!"
+			exit 1
+		fi
+	fi
+
+	if ! [ -e $CONFIG_FILE ]; then
+		cp /etc/default_config.json $CONFIG_FILE
+	fi
+
+	if ! [ -e $HOSTAPD_CONF ]; then
+		cp /etc/default_hostapd.conf $HOSTAPD_CONF
+	fi
+
+	if ! [ -e /etc/dhcp/dhcp.conf ]; then
+		cp /etc/dhcp/default_dhcpd.conf  /etc/dhcp/dhcpd.conf
+	fi
+
+	update_hostapd_config
+	update_vpn_auth
+
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    stop)
+	printf "Stopping initdevice: "
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    update)
+	update_hostapd_config
+	update_vpn_auth
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart|update}"
+	exit 1
+	;;
+esac

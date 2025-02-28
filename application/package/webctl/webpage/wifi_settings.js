@@ -50,14 +50,20 @@ function loadWifiSettingsPage() {
         };
 
         if(document.getElementById('wifiPassword').value.length < 8 || document.getElementById('wifiPassword').value.length > 63){
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'red';
             document.getElementById('message').textContent = 'Wi-Fi password length should be between [8, 63].'; 
             return;
         }
         if(document.getElementById('wifiName').value.length < 1 || document.getElementById('wifiName').value.length > 32){
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'red';
             document.getElementById('message').textContent = 'Wi-Fi name length should be between [1, 32].'; 
             return;
         }
         if(document.getElementById('internetStatus').value != "enabled" && document.getElementById('internetStatus').value != "disabled"){
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'red';
             document.getElementById('message').textContent = 'Bad internet sharing value!'; 
             return;
         }
@@ -70,6 +76,7 @@ function loadWifiSettingsPage() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'green';
             document.getElementById('message').textContent = data.message;
             setTimeout(() => {
                 document.getElementById('message').textContent = ''; 

@@ -1,0 +1,14 @@
+{
+  "wifi": {
+    "name": "rpi-wifi",
+    "password": "raspberry",
+    "internetStatus": "enabled"
+  },
+  "vpn": {
+    "nordvpn": {
+      "username": "nordvpnusername",
+      "vpnPassword": "nordvpnpassword",
+      "country": "us"
+    }
+  }
+}

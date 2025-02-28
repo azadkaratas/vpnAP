@@ -22,7 +22,6 @@ function loadVPNSettingsPage() {
                         <option value="de">Germany</option>
                         <option value="fr">France</option>
                         <option value="tr">Turkey</option>
-                        <option value="custom">Custom (Specify below)</option>
                     </select>
                 </div>
 
@@ -48,13 +47,11 @@ function loadVPNSettingsPage() {
 
     // Fetch VPN credentials
     fetch('/api/get-vpn-auth-credentials')
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to fetch credentials');
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            document.getElementById('vpnUsername').value = data.username || '';
-            document.getElementById('vpnPassword').value = data.password || '';
+            document.getElementById('vpnUsername').value = data.nordvpnUsername;
+            document.getElementById('vpnPassword').value = data.nordvpnPassword;
+            document.getElementById('vpnCountry').value = data.nordvpnCountry;
         })
         .catch(error => console.error('Error loading credentials:', error));
 
@@ -71,14 +68,19 @@ function loadVPNSettingsPage() {
 
         const VPNConfigData = {
             vpnUsername: document.getElementById('vpnUsername').value,
-            vpnPassword: document.getElementById('vpnPassword').value
+            vpnPassword: document.getElementById('vpnPassword').value,
+            vpnCountry: document.getElementById('vpnCountry').value
         };
 
         if(document.getElementById('vpnUsername').value.length < 1 || document.getElementById('vpnUsername').value.length > 32){
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'red';
             document.getElementById('message').textContent = 'VPN username length should be between [1, 32].'; 
             return;
         }
         if(document.getElementById('vpnPassword').value.length < 8 || document.getElementById('vpnPassword').value.length > 63){
+            document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'red';
             document.getElementById('message').textContent = 'VPN password length should be between [8, 63].'; 
             return;
         }
@@ -90,6 +92,7 @@ function loadVPNSettingsPage() {
         .then(response => response.json())
         .then(data => {
             document.getElementById('message').style.display = 'inherit';
+            document.getElementById('message').style.color = 'green';
             document.getElementById('message').textContent = data.message;
             setTimeout(() => {
                 document.getElementById('message').textContent = ''; 
@@ -138,7 +141,7 @@ function toggleVPN() {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            ConnectOrDisconnect: !isVpnConnected, // VPN'in ters durumu gönderiliyor
+            ConnectOrDisconnect: !isVpnConnected,
         }),
     })
         .then(response => response.json())
