@@ -388,7 +388,7 @@ app.get('/api/checkInternet', (req, res) => {
         }
     });
 });
-
+/*
 app.get('/api/network_speed_stats', (req, res) => {
     fs.readFile('/tmp/network_speed_stats.txt', 'utf8', (err, data) => {
         if (err) {
@@ -402,6 +402,35 @@ app.get('/api/network_speed_stats', (req, res) => {
         });
         
         res.json({ stats });
+    });
+});*/
+app.get('/api/network_speed_stats', (req, res) => {
+    fs.readFile('/tmp/netmon.json', 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).send("Couldn't read netmon file");
+        }
+        try {
+            const jsonData = JSON.parse(data);
+            const ethernet = jsonData.interfaces.ethernet;
+            const wifi = jsonData.interfaces.wifi;
+            
+            const stats = {
+                ethernet: {
+                    enabled: ethernet.enabled,
+                    upload: ethernet.speed.upload,
+                    download: ethernet.speed.download
+                },
+                wifi: {
+                    enabled: wifi.enabled,
+                    upload: wifi.speed.upload,
+                    download: wifi.speed.download
+                }
+            };
+            
+            res.json(stats);
+        } catch (parseError) {
+            res.status(500).send("Error parsing JSON data");
+        }
     });
 });
 

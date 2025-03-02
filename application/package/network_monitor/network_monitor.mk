@@ -1,0 +1,21 @@
+NETWORK_MONITOR_VERSION = 1.0
+NETWORK_MONITOR_SITE = $(BR2_EXTERNAL_APPLICATION_PATH)/package/network_monitor/src
+NETWORK_MONITOR_SITE_METHOD = local
+
+NETWORK_MONITOR_LDFLAGS = -ljson-c
+
+define NETWORK_MONITOR_BUILD_CMDS
+	$(MAKE) CC="$(TARGET_CC)" -C $(@D) CFLAGS="$(NETWORK_MONITOR_CFLAGS)" LDFLAGS="$(NETWORK_MONITOR_LDFLAGS)"
+endef
+
+define NETWORK_MONITOR_INSTALL_TARGET_CMDS
+	$(INSTALL) -D -m 0755 $(@D)/network_monitor $(TARGET_DIR)/usr/bin
+endef
+
+define NETWORK_MONITOR_INSTALL_INIT_SYSV
+	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_APPLICATION_PATH)/package/network_monitor/S99netmon \
+		$(TARGET_DIR)/etc/init.d/S99netmon
+endef
+
+$(eval $(generic-package))
+

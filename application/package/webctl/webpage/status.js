@@ -78,7 +78,7 @@ function loadStatusPage() {
                 borderColor: 'rgba(75, 192, 192, 1)',
                 backgroundColor: 'rgba(75, 192, 192, 0.2)',
                 borderWidth: 1,
-                fill: true,
+                fill: false,
             }]
         },
         options: {
@@ -98,19 +98,29 @@ function loadStatusPage() {
             labels: Array.from({ length: 60 }, (_, i) => `${-60 + i}`),
             datasets: [
                 {
-                    label: 'Upload (Mbps)',
-                    data: [],
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    fill: true,
-                },
-                {
-                    label: 'Download (Mbps)',
+                    label: 'WiFi Download (Mbps)',
                     data: [],
                     borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    fill: true,
-                }
+                    fill: false,
+                },
+                {
+                    label: 'WiFi Upload (Mbps)',
+                    data: [],
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    fill: false,
+                }/*,
+                {
+                    label: 'Ethernet Download (Mbps)',
+                    data: [],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    fill: false,
+                },
+                {
+                    label: 'Ethernet Upload (Mbps)',
+                    data: [],
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    fill: false,
+                },*/
             ]
         },
         options: {
@@ -126,12 +136,13 @@ function loadStatusPage() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Time (second)'
+                        text: 'Time (seconds)'
                     }
                 }
             }
         }
     });
+    
 
     // ************** Device and Network Status
     function updateDeviceStatus() {
@@ -150,14 +161,26 @@ function loadStatusPage() {
         fetch('/api/network_speed_stats')
             .then(response => response.json())
             .then(data => {
-                data.stats.forEach((stat, index) => {
-                    const downloadData = data.stats.map(stat => stat.download);
-                    const uploadData = data.stats.map(stat => stat.upload);
-
-                    networkSpeedChart.data.datasets[0].data = downloadData;
-                    networkSpeedChart.data.datasets[1].data = uploadData;                    
-                    networkSpeedChart.update();
-                });
+                if (!data.ethernet || !data.wifi) {
+                    console.error("Invalid data format");
+                    return;
+                }
+        
+                //const ethernetDownload = data.ethernet.download;
+                //const ethernetUpload = data.ethernet.upload;
+                const wifiDownload = data.wifi.download;
+                const wifiUpload = data.wifi.upload;
+        
+                networkSpeedChart.data.datasets[0].label = "WiFi Download";
+                networkSpeedChart.data.datasets[0].data = wifiDownload;
+                networkSpeedChart.data.datasets[1].label = "WiFi Upload";
+                networkSpeedChart.data.datasets[1].data = wifiUpload;
+                /*networkSpeedChart.data.datasets[2].label = "Ethernet Download";
+                networkSpeedChart.data.datasets[2].data = ethernetDownload;
+                networkSpeedChart.data.datasets[3].label = "Ethernet Upload";
+                networkSpeedChart.data.datasets[3].data = ethernetUpload;*/
+        
+                networkSpeedChart.update();
             })
             .catch(error => console.error('Error fetching network_speed_stats:', error));
 

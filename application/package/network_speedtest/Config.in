@@ -1,5 +1,0 @@
-config BR2_PACKAGE_NETWORK_SPEEDTEST
-    bool "network_speedtest"
-		default y
-    help
-      Measures the network speed test.
