@@ -22,3 +22,30 @@ cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/nordvpn_ovpn/* ${TARGET_D
 
 rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn
+
+
+BUILD_INFO_FILE=${BR2_EXTERNAL_APPLICATION_PATH}"/../version"
+CURRENT_DATE=$(date +%Y-%m-%d)
+
+# Create file if not exists
+if [ ! -f "$BUILD_INFO_FILE" ]; then
+    echo "$CURRENT_DATE:0" > "$BUILD_INFO_FILE"
+fi
+
+# Read last build date and number
+LAST_BUILD_DATE=$(cut -d':' -f1 "$BUILD_INFO_FILE")
+BUILD_NUMBER=$(cut -d':' -f2 "$BUILD_INFO_FILE")
+
+# Zero build number if date changed
+if [ "$LAST_BUILD_DATE" != "$CURRENT_DATE" ]; then
+    BUILD_NUMBER=0
+fi
+
+# Increase build number
+BUILD_NUMBER=$((BUILD_NUMBER + 1))
+echo "$CURRENT_DATE:$BUILD_NUMBER" > "$BUILD_INFO_FILE"
+
+VERSION="$CURRENT_DATE.$BUILD_NUMBER"
+echo "$VERSION" > ${TARGET_DIR}/etc/version
+
+echo "Generated Firmware Version: $VERSION"

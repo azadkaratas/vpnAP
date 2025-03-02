@@ -13,6 +13,15 @@ app.use(express.static(path.join(__dirname, '')));
 // Define paths
 const configPath = '/data/config.json';
 
+app.get('/api/version', (req, res) => {
+    fs.readFile('/etc/version', 'utf8', (err, version) => {
+        if (err) {
+            return res.status(500).send("Couldn't read version file");
+        }
+        res.json({ version: version.trim() });
+    });
+});
+
 // API endpoint to get current configuration
 app.get('/api/wifiConfig', (req, res) => {
     fs.readFile(configPath, 'utf8', (configErr, configData) => {

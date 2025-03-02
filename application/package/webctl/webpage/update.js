@@ -2,7 +2,8 @@ function loadUpdatePage() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         <div class="sub-content-area">
-            <div class="sub-content-area-header">Update Firmware</div>            
+            <div class="sub-content-area-header">Update Firmware</div>     
+            <label id="versionNo"></label><br>
             <form id="uploadForm" enctype="multipart/form-data">
                 <input type="file" name="file" id="fileInput" accept=".ext4">
                 <button type="submit">Upload</button>
@@ -18,6 +19,12 @@ function loadUpdatePage() {
         </div>
     `;
 
+    fetch('/api/version')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('versionNo').textContent = `Current Version: ${data.version}`;
+    })
+    .catch(error => console.error('Error fetching network-status:', error));
     
     document.getElementById('uploadForm').addEventListener('submit', function (event) {
         event.preventDefault();
