@@ -3,33 +3,32 @@ function loadWifiSettingsPage() {
     contentArea.innerHTML = `
         <div class="sub-content-area">
             <div class="sub-content-area-header">Wi-Fi Configuration</div>
-            <form id="wifiSettingsForm" class="mt-4">
-                <div class="form-group">
-                    <label>Name of the Wi-Fi network (SSID):</label>
-                    <input type="text" id="wifiName" name="wifiName" class="form-control">
+            <form id="wifiSettingsForm" class="mt-3">
+                <div class="mb-3">
+                    <label for="wifiName" class="form-label">Wi-Fi Name (SSID)</label>
+                    <input type="text" id="wifiName" name="wifiName" class="form-control" required>
                 </div>
-                <div class="form-group mt-3">
-                    <label for="ipAddress">Wi-Fi Password:</label>
-                    <input type="password" id="wifiPassword" name="wifiPassword" class="form-control">
+                <div class="mb-3">
+                    <label for="wifiPassword" class="form-label">Wi-Fi Password</label>
+                    <input type="password" id="wifiPassword" name="wifiPassword" class="form-control" required>
                 </div>
-                <div class="form-group mt-3">
-                    <label for="internetStatus">Internet Sharing:</label>
+                <div class="mb-3">
+                    <label for="internetStatus" class="form-label">Internet Sharing</label>
                     <select id="internetStatus" name="internetStatus" class="form-select">
                         <option value="enabled">Enabled</option>
                         <option value="disabled">Disabled</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary mt-4">Save Configuration</button>
+                <button type="submit" class="btn btn-primary">Save Configuration</button>
             </form>
             <div id="message" class="message mt-3" style="display: none;"></div>
         </div>
         <div class="sub-content-area">
             <div class="sub-content-area-header">Connected Devices</div>
-            <ul id="deviceList"></ul>
+            <ul id="deviceList" class="list-unstyled"></ul>
         </div>
     `;
 
-    // Fetch the initial configuration and populate fields
     fetch('/api/wifiConfig')
         .then(response => response.json())
         .then(data => {
@@ -39,7 +38,6 @@ function loadWifiSettingsPage() {
         })
         .catch(error => console.error('Error fetching configuration:', error));
 
-    // Submit form handler
     document.getElementById('wifiSettingsForm').addEventListener('submit', function (event) {
         event.preventDefault();
 
@@ -49,22 +47,23 @@ function loadWifiSettingsPage() {
             InternetStatus: document.getElementById('internetStatus').value
         };
 
-        if(document.getElementById('wifiPassword').value.length < 8 || document.getElementById('wifiPassword').value.length > 63){
-            document.getElementById('message').style.display = 'inherit';
-            document.getElementById('message').style.color = 'red';
-            document.getElementById('message').textContent = 'Wi-Fi password length should be between [8, 63].'; 
+        const message = document.getElementById('message');
+        if (WifiConfigData.WifiPassword.length < 8 || WifiConfigData.WifiPassword.length > 63) {
+            message.style.display = 'block';
+            message.className = 'message error';
+            message.textContent = 'Wi-Fi password length should be between 8 and 63 characters.';
             return;
         }
-        if(document.getElementById('wifiName').value.length < 1 || document.getElementById('wifiName').value.length > 32){
-            document.getElementById('message').style.display = 'inherit';
-            document.getElementById('message').style.color = 'red';
-            document.getElementById('message').textContent = 'Wi-Fi name length should be between [1, 32].'; 
+        if (WifiConfigData.WifiName.length < 1 || WifiConfigData.WifiName.length > 32) {
+            message.style.display = 'block';
+            message.className = 'message error';
+            message.textContent = 'Wi-Fi name length should be between 1 and 32 characters.';
             return;
         }
-        if(document.getElementById('internetStatus').value != "enabled" && document.getElementById('internetStatus').value != "disabled"){
-            document.getElementById('message').style.display = 'inherit';
-            document.getElementById('message').style.color = 'red';
-            document.getElementById('message').textContent = 'Bad internet sharing value!'; 
+        if (!['enabled', 'disabled'].includes(WifiConfigData.InternetStatus)) {
+            message.style.display = 'block';
+            message.className = 'message error';
+            message.textContent = 'Invalid Internet Sharing value!';
             return;
         }
 
@@ -75,13 +74,10 @@ function loadWifiSettingsPage() {
         })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('message').style.display = 'inherit';
-            document.getElementById('message').style.color = 'green';
-            document.getElementById('message').textContent = data.message;
-            setTimeout(() => {
-                document.getElementById('message').textContent = ''; 
-                document.getElementById('message').style.display = 'none';
-                }, 3000);
+            message.style.display = 'block';
+            message.className = 'message success';
+            message.textContent = data.message;
+            setTimeout(() => { message.style.display = 'none'; }, 3000);
         })
         .catch(error => console.error('Error updating configuration:', error));
     });
@@ -90,16 +86,12 @@ function loadWifiSettingsPage() {
         fetch('/api/connected-devices')
             .then(response => response.json())
             .then(devices => {
-                const deviceList = document.getElementById("deviceList");
-                deviceList.innerHTML = '';
-    
-                devices.forEach(device => {
-                    const listItem = document.createElement("li");
-                    listItem.textContent = `IP: ${device.ip}, Hostname: ${device.hostname || 'Unknown'}`;
-                    deviceList.appendChild(listItem);
-                });
+                const deviceList = document.getElementById('deviceList');
+                deviceList.innerHTML = devices.length
+                    ? devices.map(device => `<li>IP: ${device.ip}, Hostname: ${device.hostname || 'Unknown'}</li>`).join('')
+                    : '<li>No devices connected.</li>';
             })
-            .catch(error => console.error("Couldn't get the device list:", error));
+            .catch(error => console.error("Error fetching connected devices:", error));
     }
     loadConnectedDevices();
 }
