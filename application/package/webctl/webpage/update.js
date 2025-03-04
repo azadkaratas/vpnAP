@@ -1,4 +1,4 @@
-function loadUpdatePage() {
+async function loadUpdatePage() {
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = `
         <div class="sub-content-area">
@@ -14,71 +14,157 @@ function loadUpdatePage() {
             <div id="message" class="message mt-3" style="display: none;"></div>
             <div id="popup" class="popup">
                 <div class="popup-content">
-                    <p id="popup-text">Processing...</p>
+                    <div class="progress mt-2">
+                        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <p id="progressText" class="mt-2">Uploading: 0% (0 bytes remaining, 0 KB/s)</p>
                     <button id="popupCancelBtn" class="btn btn-secondary mt-2">Cancel</button>
                 </div>
             </div>
         </div>
     `;
 
-    fetch('/api/version')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('versionNo').textContent = `Current Version: ${data.version}`;
-        })
-        .catch(error => console.error('Error fetching version:', error));
+    // Fetch current version
+    try {
+        const response = await fetch('/api/version');
+        const data = await response.json();
+        document.getElementById('versionNo').textContent = `Current Version: ${data.version}`;
+    } catch (error) {
+        console.error('Error fetching version:', error);
+        document.getElementById('versionNo').textContent = 'Error loading version';
+    }
 
-    document.getElementById('uploadForm').addEventListener('submit', function (event) {
+    // Handle form submission
+    document.getElementById('uploadForm').addEventListener('submit', async function (event) {
         event.preventDefault();
 
-        const formData = new FormData();
         const fileInput = document.getElementById('fileInput');
         const message = document.getElementById('message');
         const popup = document.getElementById('popup');
-        const popupText = document.getElementById('popup-text');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const cancelBtn = document.getElementById('popupCancelBtn');
 
-        if (!fileInput.files[0]) {
+        // Client-side validation
+        const file = fileInput.files[0];
+        if (!file) {
             message.style.display = 'block';
             message.className = 'message error';
             message.textContent = 'Please select a file to upload.';
             return;
         }
 
-        formData.append('file', fileInput.files[0]);
-        popup.style.display = 'flex';
-        popupText.textContent = 'Uploading file...';
-
-        fetch('/api/upload', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            message.style.display = 'block';
-            message.className = `message ${data.message.includes('success') ? 'success' : 'error'}`;
-            message.textContent = data.message;
-
-            if (data.message.includes('success')) {
-                popupText.textContent = 'Updating firmware...';
-                setTimeout(() => {
-                    popup.style.display = 'none';
-                    alert('Firmware update initiated. Device will restart.');
-                }, 2000);
-            } else {
-                popup.style.display = 'none';
-            }
-        })
-        .catch(error => {
+        if (!file.name.endsWith('.ext4')) {
             message.style.display = 'block';
             message.className = 'message error';
-            message.textContent = 'Error uploading file.';
-            popup.style.display = 'none';
-            console.error('Error uploading file:', error);
-        });
-    });
+            message.textContent = 'Only .ext4 files are allowed.';
+            return;
+        }
 
-    document.getElementById('popupCancelBtn').addEventListener('click', () => {
-        document.getElementById('popup').style.display = 'none';
+        if (file.size > 400 * 1024 * 1024) {
+            message.style.display = 'block';
+            message.className = 'message error';
+            message.textContent = 'File size exceeds 400MB limit.';
+            return;
+        }
+
+        // Prepare FormData
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Show popup with progress
+        popup.style.display = 'flex';
+        message.style.display = 'none';
+
+        try {
+            // Use XMLHttpRequest for progress tracking and cancellation
+            const xhr = new XMLHttpRequest();
+            let startTime = null;
+
+            // Progress event listener
+            xhr.upload.addEventListener('progress', (event) => {
+                if (event.lengthComputable) {
+                    if (!startTime) startTime = Date.now();
+                    const elapsedTime = (Date.now() - startTime) / 1000;
+                    const percentComplete = Math.round((event.loaded / event.total) * 100);
+                    const mbytesRemaining = Math.round((event.total - event.loaded) / 1024 / 1024);
+                    const speed = event.loaded / elapsedTime / 1024;
+                    progressBar.style.width = `${percentComplete}%`;
+                    progressBar.setAttribute('aria-valuenow', percentComplete);
+                    progressText.textContent = `Uploading: ${percentComplete}% (${mbytesRemaining} MB remaining, ${speed.toFixed(2)} KB/s)`;
+                }
+            });
+
+            // Completion handler
+            xhr.addEventListener('load', async () => {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.message.includes('success')) {
+                        progressText.textContent = 'File uploaded. Updating firmware...';
+                        // Wait for server to confirm firmware update initiation
+                        try {
+                            const updateResponse = await fetch('/api/update-firmware', { method: 'POST' });
+                            const updateData = await updateResponse.json();
+                            message.style.display = 'block';
+                            message.className = `message ${updateData.success ? 'success' : 'error'}`;
+                            message.textContent = updateData.message;
+                            popup.style.display = 'none';
+                            if (updateData.success) {
+                                setTimeout(() => {
+                                    alert('Firmware update completed. Device is now restarting.');
+                                }, 2000);
+                            }
+                        } catch (updateError) {
+                            message.style.display = 'block';
+                            message.className = 'message error';
+                            message.textContent = 'Error initiating firmware update: ' + updateError.message;
+                            popup.style.display = 'none';
+                        }
+                    } else {
+                        message.style.display = 'block';
+                        message.className = 'message error';
+                        message.textContent = data.message;
+                        popup.style.display = 'none';
+                    }
+                } else {
+                    message.style.display = 'block';
+                    message.className = 'message error';
+                    message.textContent = `Server responded with status ${xhr.status}`;
+                    popup.style.display = 'none';
+                }
+            });
+
+            // Error handler
+            xhr.addEventListener('error', () => {
+                message.style.display = 'block';
+                message.className = 'message error';
+                message.textContent = 'Error uploading file. Network issue occurred.';
+                popup.style.display = 'none';
+            });
+
+            // Abort handler
+            xhr.addEventListener('abort', () => {
+                message.style.display = 'block';
+                message.className = 'message error';
+                message.textContent = 'Upload cancelled by user.';
+                popup.style.display = 'none';
+            });
+
+            // Send request
+            xhr.open('POST', '/api/upload', true);
+            xhr.send(formData);
+
+            // Cancel button functionality
+            cancelBtn.onclick = () => {
+                xhr.abort(); // Cancel the upload
+            };
+
+        } catch (error) {
+            message.style.display = 'block';
+            message.className = 'message error';
+            message.textContent = `Error uploading file: ${error.message}`;
+            popup.style.display = 'none';
+        }
     });
 }
 

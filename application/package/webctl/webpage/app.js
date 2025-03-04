@@ -10,6 +10,15 @@ const multer = require('multer');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
 
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
+
 // Define paths
 const configPath = '/data/config.json';
 
@@ -443,42 +452,49 @@ app.get('/api/network_speed_stats', (req, res) => {
     });
 });
 
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
-
 // Set up multer for file uploads
 const upload = multer({
     dest: '/tmp/', // Destination folder for uploaded files
     limits: { fileSize: 400 * 1024 * 1024 } // Limit file size to 400MB
 });
 
-app.post("/api/upload", upload.single("file"), uploadSingle)
-
-function uploadSingle(req, res) {
+app.post("/api/upload", upload.single("file"), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    // File information
     const filePath = req.file.path;
     const fileName = req.file.originalname;
-    if(fileName == "rootfs.ext4"){
-        // Move the file to the desired location if needed
+    if (fileName === "rootfs.ext4") {
         const targetPath = path.join('/tmp/', fileName);
+
+        if (fs.existsSync(targetPath)) {
+            fs.unlink(targetPath, () => {}); // Clean up previous file
+            console.log(`Cleaning previous fwupdate file`);
+        }
         fs.rename(filePath, targetPath, (err) => {
             if (err) {
-                return res.status(500).json({ message: 'Error moving file', error: err });
+                return res.status(500).json({ message: 'Error moving file', error: err.message });
             }
+            res.json({ message: 'File uploaded successfully. Ready to update firmware.', file: targetPath });
         });
-        return res.json({ message: 'File uploaded successfully. Updating device. Please wait...', file: targetPath });
+    } else {
+        fs.unlink(filePath, () => {}); // Clean up invalid file
+        return res.status(400).json({ message: 'Invalid file uploaded. Only rootfs.ext4 is allowed.' });
     }
-    else{
-        return res.json({ message: 'Invalid file uploaded' });
-    }
-}
+});
+
+app.post('/api/update-firmware', (req, res) => {
+    exec('sh /usr/bin/updatefw.sh', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error executing updatefw.sh: ${error.message}`);
+            return res.status(500).json({ success: false, message: `Firmware update failed: ${error.message}` });
+        }
+        if (stderr) {
+            console.error(`Update command stderr: ${stderr}`);
+            return res.status(500).json({ success: false, message: `Firmware update error: ${stderr}` });
+        }
+        console.log(`Firmware update stdout: ${stdout}`);
+        res.json({ success: true, message: 'Firmware updated successfully.' });
+    });
+});
