@@ -114,7 +114,7 @@ app.post('/api/wifiConfig', (req, res) => {
 });
 
 app.post('/api/restart', (req, res) => {
-    exec('reboot -f', (error, stdout, stderr) => {
+    exec('( sleep 1 ; reboot ) & ', (error, stdout, stderr) => {
         if (error) {
             console.log(`Error restarting device: ${error.message}`);
             return res.json({ message: 'Error restarting device' });
@@ -124,6 +124,7 @@ app.post('/api/restart', (req, res) => {
             return res.json({ message: 'Command error' });
         }
     });
+    res.json({ success: true, message: 'Device restart initiated successfully.' });
 });
 
 app.get('/api/network-status', (req, res) => {
