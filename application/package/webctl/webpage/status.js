@@ -167,12 +167,73 @@ function loadStatusPage() {
     }
     checkVPNStatus();
 
+    // Check for existing restart popup on page load and close it
+    const existingPopup = document.getElementById('restartPopup');
+    if (existingPopup) {
+        existingPopup.style.display = 'none';
+    }
+
     document.getElementById('restartButton').addEventListener('click', () => {
-        if (confirm('Are you sure you want to restart the device?')) {
-            fetch('/api/restart', { method: 'POST' }).then(res => res.json()).then(data => {
-                alert('Device restarting...');
-            }).catch(err => console.error(err));
+        // Remove any existing popup to reset state
+        let restartPopup = document.getElementById('restartPopup');
+        if (restartPopup) {
+            restartPopup.remove();
         }
+
+        // Create fresh popup
+        const popupHtml = `
+            <div id="restartPopup" class="popup">
+                <div class="popup-content">
+                    <p>Are you sure you want to restart the device?</p>
+                    <button id="restartYesBtn" class="btn btn-primary mt-2">Yes</button>
+                    <button id="restartNoBtn" class="btn btn-secondary mt-2">No</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', popupHtml);
+        restartPopup = document.getElementById('restartPopup');
+        restartPopup.style.display = 'flex';
+
+        // Add event listeners to buttons
+        const yesBtn = document.getElementById('restartYesBtn');
+        const noBtn = document.getElementById('restartNoBtn');
+
+        yesBtn.addEventListener('click', () => {
+            fetch('/api/restart', { method: 'POST' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Restart request failed');
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        restartPopup.innerHTML = `
+                            <div class="popup-content">
+                                <p>Device restarting...</p>
+                            </div>
+                        `;
+                         // To make sure when device reboots, popup is gone automatically
+                        setTimeout(() => { window.location.reload(); }, 30000);
+                    } else {
+                        throw new Error(data.message || 'Restart failed');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error restarting device:', err);
+                    restartPopup.innerHTML = `
+                        <div class="popup-content">
+                            <p>Error restarting device: ${err.message}</p>
+                            <button id="restartCloseBtn" class="btn btn-secondary mt-2">Close</button>
+                        </div>
+                    `;
+                    document.getElementById('restartCloseBtn').addEventListener('click', () => {
+                        restartPopup.style.display = 'none';
+                    });
+                });
+        }, { once: true }); // Ensure listener runs only once
+
+        noBtn.addEventListener('click', () => {
+            restartPopup.style.display = 'none';
+        }, { once: true }); // Ensure listener runs only once
     });
 }
 
