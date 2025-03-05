@@ -375,20 +375,39 @@ app.get('/api/connected-devices', (req, res) => {
         const leases = [];
         const registeredIPs = new Map();
         const leaseBlocks = data.split('lease ').slice(1);
+        const now = new Date(); // Current time for duration calculation
 
         leaseBlocks.forEach(block => {
             const lines = block.trim().split('\n');
             const lease = {};
 
-            lease.ip = lines[0].trim().split(' ')[0];
+            lease.ip = lines[0].trim().split(' ')[0]; // IP from "lease <IP> {"
             lines.forEach(line => {
                 if (line.includes('client-hostname')) {
-                    lease.hostname = line.split('"')[1];
+                    lease.hostname = line.split('"')[1] || 'Unknown';
                 } else if (line.includes('binding state active')) {
                     lease.active = true;
+                } else if (line.includes('starts')) {
+                    // Parse "starts 3 2025/03/05 21:40:46;"
+                    const startStr = line.split('starts ')[1]?.replace(';', '').trim();
+                    if (startStr) {
+                        const parts = startStr.split(' '); // ["3", "2025/03/05", "21:40:46"]
+                        if (parts.length >= 2) {
+                            const dateTime = `${parts[1]} ${parts[2]}`; // "2025/03/05 21:40:46"
+                            // Replace slashes with dashes and ensure UTC
+                            lease.start = new Date(dateTime.replace(/\//g, '-') + ' UTC');
+                            if (!isNaN(lease.start)) {
+                                const durationMs = now - lease.start;
+                                lease.connectedMinutes = Math.floor(durationMs / 60000); // Convert ms to minutes
+                            } else {
+                                console.error(`Invalid start time for ${lease.ip}: ${dateTime}`);
+                                lease.connectedMinutes = 0; // Fallback
+                            }
+                        }
+                    }
                 }
             });
-            if (lease.active) {
+            if (lease.active && lease.ip !== "192.168.2.10") {
                 registeredIPs.set(lease.ip, lease);
             }
         });
@@ -407,22 +426,7 @@ app.get('/api/checkInternet', (req, res) => {
         }
     });
 });
-/*
-app.get('/api/network_speed_stats', (req, res) => {
-    fs.readFile('/tmp/network_speed_stats.txt', 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).send("Couldn't read network_speed_stats file");
-        }
-        
-        const lines = data.trim().split('\n');
-        const stats = lines.map(line => {
-            const [download, upload] = line.split(',');
-            return { download: parseFloat(download), upload: parseFloat(upload) };
-        });
-        
-        res.json({ stats });
-    });
-});*/
+
 app.get('/api/network_speed_stats', (req, res) => {
     fs.readFile('/tmp/netmon.json', 'utf8', (err, data) => {
         if (err) {

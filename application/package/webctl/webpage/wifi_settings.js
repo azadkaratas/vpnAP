@@ -25,7 +25,7 @@ function loadWifiSettingsPage() {
         </div>
         <div class="sub-content-area">
             <div class="sub-content-area-header">Connected Devices</div>
-            <ul id="deviceList" class="list-unstyled"></ul>
+            <ul id="deviceList" class="device-list"></ul>
         </div>
     `;
 
@@ -88,10 +88,21 @@ function loadWifiSettingsPage() {
             .then(devices => {
                 const deviceList = document.getElementById('deviceList');
                 deviceList.innerHTML = devices.length
-                    ? devices.map(device => `<li>IP: ${device.ip}, Hostname: ${device.hostname || 'Unknown'}</li>`).join('')
-                    : '<li>No devices connected.</li>';
+                    ? devices.map(device => `
+                        <li class="device-card">
+                            <div class="device-info">
+                                <span class="device-label">IP:</span> ${device.ip}<br>
+                                <span class="device-label">Hostname:</span> ${device.hostname || 'Unknown'}<br>
+                                <span class="device-label">Connected:</span> ${device.connectedMinutes} minutes
+                            </div>
+                        </li>
+                    `).join('')
+                    : '<li class="no-devices">No devices connected.</li>';
             })
-            .catch(error => console.error("Error fetching connected devices:", error));
+            .catch(error => {
+                console.error("Error fetching connected devices:", error);
+                document.getElementById('deviceList').innerHTML = '<li class="no-devices">Error loading devices.</li>';
+            });
     }
     loadConnectedDevices();
 }

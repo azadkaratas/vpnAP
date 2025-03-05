@@ -335,3 +335,43 @@ select:focus {
 .progress-bar {
     background: linear-gradient(135deg, #7c3aed, #22d3ee); /* Violet-to-cyan */
 }
+
+.device-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.device-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #2d2d2d;
+    border-radius: 8px;
+    border-left: 4px solid #22d3ee; /* Cyan accent */
+    color: #f0f0f0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.device-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+}
+
+.device-info {
+    flex-grow: 1;
+}
+
+.device-label {
+    color: #d946ef; /* Magenta for labels */
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.no-devices {
+    color: #94a3b8;
+    padding: 10px;
+    text-align: center;
+}
