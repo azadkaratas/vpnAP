@@ -212,7 +212,7 @@ function loadStatusPage() {
                             </div>
                         `;
                          // To make sure when device reboots, popup is gone automatically
-                        setTimeout(() => { window.location.reload(); }, 10000);
+                        setTimeout(() => { window.location.reload(); }, 30000);
                     } else {
                         throw new Error(data.message || 'Restart failed');
                     }
