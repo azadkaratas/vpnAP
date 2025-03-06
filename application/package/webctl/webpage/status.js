@@ -36,10 +36,7 @@ function loadStatusPage() {
             <div class="sub-content-area-header">Device Statistics</div>
             <ul id="statsData" class="list-unstyled"></ul>
             <div class="chart-container">
-                <canvas id="cpuUsageChart"></canvas>
-            </div>
-            <div class="chart-container">
-                <canvas id="networkSpeedChart"></canvas>
+                <div id="networkSpeedChart"></div>
             </div>
             <button id="restartButton" class="btn btn-primary mt-3">Restart Device</button>
         </div>
@@ -52,43 +49,54 @@ function loadStatusPage() {
         </div>
     `;
 
-    // Chart setup remains unchanged
-    const ctx = document.getElementById('cpuUsageChart').getContext('2d');
-    let cpuUsageChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'CPU Usage (%)',
-                data: [],
-                borderColor: '#7c3aed', // Updated to violet
-                backgroundColor: 'rgba(124, 58, 237, 0.2)',
-                fill: false
-            }]
+    // ************** Network Speed Chart with ApexCharts
+    const networkSpeedOptions = {
+        chart: {
+            type: 'area',
+            height: 300,
+            foreColor: '#f0f0f0',
+            toolbar: { show: false }, // Hide toolbar for simplicity
+            zoom: { enabled: false }
         },
-        options: { scales: { y: { beginAtZero: true, max: 100 } } }
-    });
-
-    const ctx2 = document.getElementById('networkSpeedChart').getContext('2d');
-    const networkSpeedChart = new Chart(ctx2, {
-        type: 'line',
-        data: {
-            labels: Array.from({ length: 60 }, (_, i) => `${-60 + i}`),
-            datasets: [
-                { label: 'WiFi Download (Mbps)', data: [], borderColor: '#d946ef', fill: false }, // Magenta
-                { label: 'WiFi Upload (Mbps)', data: [], borderColor: '#22d3ee', fill: false } // Cyan
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: true, title: { display: true, text: 'Speed (Mbps)' } },
-                x: { title: { display: true, text: 'Time (seconds)' } }
+        dataLabels: { enabled: false },
+        stroke: { curve: 'smooth', width: 1 },
+        series: [
+            { name: 'WiFi Download (Mbps)', data: [] },
+            { name: 'WiFi Upload (Mbps)', data: [] }
+            // Uncomment for Ethernet if needed
+            // { name: 'Ethernet Download (Mbps)', data: [] },
+            // { name: 'Ethernet Upload (Mbps)', data: [] }
+        ],
+        colors: ['#ff6384', '#36a2eb'], // Red for download, blue for upload
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.7,
+                opacityTo: 0.3
             }
+        },
+        xaxis: {
+            categories: Array.from({ length: 60 }, (_, i) => `${-60 + i}`),
+            title: { text: 'Time (seconds)', style: { color: '#f0f0f0' } },
+            labels: { style: { colors: '#94a3b8' } }
+        },
+        yaxis: {
+            title: { text: 'Speed (Mbps)', style: { color: '#f0f0f0' } },
+            labels: { style: { colors: '#94a3b8' } },
+            min: 0
+        },
+        grid: { borderColor: '#475569' },
+        tooltip: {
+            theme: 'dark',
+            x: { show: true },
+            y: { formatter: val => `${val.toFixed(2)} Mbps` }
         }
-    });
+    };
 
-    // Rest of the function remains unchanged
+    const networkSpeedChart = new ApexCharts(document.querySelector('#networkSpeedChart'), networkSpeedOptions);
+    networkSpeedChart.render();
+
     function updateDeviceStatus() {
         fetch('/api/network-status').then(res => res.json()).then(data => {
             document.getElementById('ethernetData').textContent = data.isEthernetConnected
@@ -96,11 +104,27 @@ function loadStatusPage() {
                 : 'Ethernet Not Connected!';
         }).catch(err => console.error(err));
 
-        fetch('/api/network_speed_stats').then(res => res.json()).then(data => {
-            networkSpeedChart.data.datasets[0].data = data.wifi.download;
-            networkSpeedChart.data.datasets[1].data = data.wifi.upload;
-            networkSpeedChart.update();
-        }).catch(err => console.error(err));
+        fetch('/api/network_speed_stats')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.wifi) {
+                    console.error("Invalid data format");
+                    return;
+                }
+
+                const wifiDownload = data.wifi.download || [];
+                const wifiUpload = data.wifi.upload || [];
+                // const ethernetDownload = data.ethernet?.download || [];
+                // const ethernetUpload = data.ethernet?.upload || [];
+
+                networkSpeedChart.updateSeries([
+                    { name: 'WiFi Download (Mbps)', data: wifiDownload.slice(-60) },
+                    { name: 'WiFi Upload (Mbps)', data: wifiUpload.slice(-60) }
+                    // { name: 'Ethernet Download (Mbps)', data: ethernetDownload.slice(-60) },
+                    // { name: 'Ethernet Upload (Mbps)', data: ethernetUpload.slice(-60) }
+                ]);
+            })
+            .catch(error => console.error('Error fetching network_speed_stats:', error));
 
         fetch('/api/connected-devices').then(res => res.json()).then(devices => {
             document.getElementById('wifiData').textContent = `Connected Devices: ${devices.length}`;
@@ -113,15 +137,7 @@ function loadStatusPage() {
                 <li>Memory Usage: ${data.memoryUsage}</li>
                 <li>Disk Usage: ${data.diskFreeSpace} (${data.diskUsagePercentage}%)</li>
                 <li>CPU Usage: ${data.cpuUsage}%</li>
-                <li>CPU Temperature: ${parseInt(data.cpuTemperature) / 1000} °C</li>
-            `;
-            cpuUsageChart.data.labels.push(new Date().toLocaleTimeString());
-            cpuUsageChart.data.datasets[0].data.push(data.cpuUsage);
-            if (cpuUsageChart.data.labels.length > 50) {
-                cpuUsageChart.data.labels.shift();
-                cpuUsageChart.data.datasets[0].data.shift();
-            }
-            cpuUsageChart.update();
+                <li>CPU Temperature: ${parseInt(data.cpuTemperature) / 1000} °C</li>`;
         }).catch(err => console.error(err));
     }
 

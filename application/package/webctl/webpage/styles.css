@@ -187,16 +187,12 @@ select:focus {
     box-shadow: 0 0 15px rgba(217, 70, 239, 0.8); /* Magenta glow */
 }
 
-/* Chart and Status LED */
 .chart-container {
     width: 100%;
-    max-width: 600px;
-    margin: 20px auto;
-    background: #1e293b; /* Match content */
+    max-width: 800px; /* Limit width for readability */
+    background: #2d2d2d; /* Match theme */
     padding: 10px;
-    border-radius: 12px;
-    border: 1px solid rgba(124, 58, 237, 0.2);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
 }
 
 .status-led {
