@@ -52,6 +52,3 @@ dtparam=act_led_activelow=off
 # Disable ethernet port LEDs
 dtparam=eth_led0=4
 dtparam=eth_led1=4
-
-arm_freq=700
-core_freq=250

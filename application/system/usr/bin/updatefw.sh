@@ -4,7 +4,7 @@
 UPDATE_FILE="/tmp/rootfs.ext4"          # Source firmware file
 BOOT_PARTITION="/dev/mmcblk0p1"         # Boot partition
 LOG_FILE="/var/log/updatefw.log"        # Log file for debugging
-MIN_SPACE_MB=250                        # Minimum free space required (in MB)
+MIN_SPACE_MB=220                        # Minimum free space required (in MB)
 
 # Function to log messages (to both stdout and log file)
 log_message() {
