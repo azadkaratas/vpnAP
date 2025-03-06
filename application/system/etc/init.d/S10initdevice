@@ -87,8 +87,8 @@ case $1 in
 		cp /etc/default_hostapd.conf $HOSTAPD_CONF
 	fi
 
-	if ! [ -e /etc/dhcp/dhcp.conf ]; then
-		cp /etc/dhcp/default_dhcpd.conf  /etc/dhcp/dhcpd.conf
+	if ! [ -e /etc/dhcp.conf ]; then
+		cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpd.conf
 	fi
 
 	update_hostapd_config
