@@ -1,3 +1,9 @@
 [submodule "buildroot"]
 	path = buildroot
 	url = https://github.com/buildroot/buildroot.git
+[submodule "json-web-gen"]
+	path = application/package/webctl/webpage/
+	url = https://github.com/azadkaratas/json-web-gen.git
+[submodule "application/package/webctl/webpage/json-web-gen"]
+	path = application/package/webctl/webpage/json-web-gen
+	url = https://github.com/azadkaratas/json-web-gen.git
