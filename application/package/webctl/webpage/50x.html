@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Starting</title>
+    <meta http-equiv="refresh" content="5"> <!-- Reload every 5 seconds -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(to bottom, #0f172a, #1e293b);
+            color: #f0f0f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px; /* Add padding for small screens */
+        }
+
+        .container {
+            text-align: center;
+            padding: 30px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+            max-width: 500px; /* Limit max width for larger screens */
+            width: 100%; /* Full width on smaller screens */
+        }
+
+        h1 {
+            color: #d946ef;
+            margin-bottom: 15px;
+            font-size: 2rem; /* Responsive font size */
+        }
+
+        p {
+            color: #22d3ee;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            p {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Service Starting</h1>
+        <p>The VPN-AP service is starting up. Please wait...</p>
+        <p>This page will refresh automatically every 5 seconds.</p>
+    </div>
+</body>
+</html>
