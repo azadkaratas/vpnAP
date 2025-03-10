@@ -31,6 +31,27 @@ app.get('/api/version', (req, res) => {
     });
 });
 
+app.get('/api/overview', (req, res) => {
+    var connectedDeviceCount, ethStatus;
+    fs.readFile('/var/lib/dhcp/dhcpd.leases', 'utf8', (err, data) => {
+        if (err) {
+            console.error("Couldn't read DHCP file:", err);
+            return res.status(500).json({ message: "Couldn't read DHCP file" });
+        }
+
+        const leases = [];
+        const registeredIPs = new Map();
+        const leaseBlocks = data.split('lease ').slice(1);
+    });
+    fs.readFile('/etc/version', 'utf8', (err, version) => {
+        if (err) {
+            return res.status(500).send("Couldn't read version file");
+        }
+        ethStatus = version.trim();
+    });
+    res.json({ connectedDeviceCount: 5, ethStatus:ethStatus});
+});
+
 // API endpoint to get current configuration
 app.get('/api/wifiConfig', (req, res) => {
     fs.readFile(configPath, 'utf8', (configErr, configData) => {
@@ -413,7 +434,7 @@ app.get('/api/connected-devices', (req, res) => {
         });
 
         registeredIPs.forEach(value => leases.push(value));
-        res.json(leases);
+        res.json({connectedDevices:leases});
     });
 });
 

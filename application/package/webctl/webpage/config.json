@@ -1,124 +1,124 @@
 {
-    "title": "VPN Access Point Management Panel",
-    "header": {
-      "projectName": "VPN Access Point",
-      "logo": "logo.png"
+  "title": "VPN Access Point Management Panel",
+  "header": {
+    "projectName": "VPN Access Point",
+    "logo": "logo.png"
+  },
+  "tabs": [
+    {
+      "title": "Overview",
+      "id": "overview",
+      "fetchData": false,
+      "description": "General overview of the device",
+      "fetchFromAPI": "/api/overview",
+      "subtabs": []
     },
-    "tabs": [
-      {
-        "title": "Overview",
-        "id": "overview",
-        "fetchData": false,
-        "description": "General overview of the device",
-        "subtabs": []
-      },
-      {
-        "title": "Wi-Fi",
-        "subtabs": [
-          { "id": "wifiSettings", "title": "Settings", "description": "Configure your Wi-Fi settings." },
-          { "id": "wifiConnectedDevices", "title": "Connected Devices" }
-        ]
-      },
-      {
-        "title": "VPN",
-        "subtabs": [
-          { "id": "vpnSettings", "title": "VPN Settings", "dataSource": "vpn.json", "description": "VPN bağlantı ayarlarını düzenleyin ve durumu kontrol edin." }
-        ]
-      },
-      {
-        "title": "System",
-        "subtabs": [
-          { "id": "eventLog", "title": "Event Logs" },
-          { "id": "fwUpdate", "title": "Firmware Update" }
-        ]
-      }
-    ],
-    "content": [
-      {
-        "subtabId": "overview",
-        "items": [
-          { "type": "categoryDiv", "id": "accountDetails", "title": "Network Information", "items": [
-            { "type": "label", "id": "ethStatus", "text": "Ethernet Status" },
-            { "type": "label", "id": "connectedDeviceCount", "text": "Connected Devices:X" },
-            { "type": "label", "id": "username", "text": "Internet Sharing:X" }
+    {
+      "title": "Wi-Fi",
+      "subtabs": [
+        { "id": "wifiSettings", "title": "Settings", "description": "Configure your Wi-Fi settings.", "fetchFromAPI": "/api/wifiConfig"},
+        { "id": "wifiConnectedDevices", "title": "Connected Devices", "fetchFromAPI": "/api/connected-devices" }
+      ]
+    },
+    {
+      "title": "VPN",
+      "subtabs": [
+        { "id": "vpnSettings", "title": "VPN Settings", "dataSource": "vpn.json", "description": "VPN bağlantı ayarlarını düzenleyin ve durumu kontrol edin." }
+      ]
+    },
+    {
+      "title": "System",
+      "subtabs": [
+        { "id": "eventLog", "title": "Event Logs" },
+        { "id": "fwUpdate", "title": "Firmware Update", "fetchFromAPI": "/api/version" }
+      ]
+    }
+  ],
+  "content": [
+    {
+      "subtabId": "overview",
+      "items": [
+        { "type": "categoryDiv", "id": "accountDetails", "title": "Network Information", "items": [
+          { "type": "textValue", "id": "ethStatus", "text": "Ethernet Status" },
+          { "type": "textValue", "id": "connectedDeviceCount", "text": "Connected Devices:X" },
+          { "type": "textValue", "id": "username", "text": "Internet Sharing:X" }
+        ]},
+        { "type": "categoryDiv", "id": "accountDetails", "title": "VPN Status", "items": [
+          { "type": "textValue", "id": "vpnIpAddress", "text": "IP Address" },
+          { "type": "textValue", "id": "vpnStatus", "text": "VPN Status" }
+        ]},
+        { "type": "categoryDiv", "id": "accountDetails", "title": "Device Statistics", "items": [
+        ]}
+      ]
+    },
+    {
+      "subtabId": "wifiSettings",
+      "items": [
+          { "type": "categoryDiv", "id": "wifiSettings", "title": "Wi-Fi Credentials", "items": [
+            { "type": "text", "id": "WifiName", "label": "SSID" },
+            { "type": "password", "id": "WifiPassword", "label": "Wi-Fi Password" },
+            { "type": "button", "id": "saveWifiCredentials", "label": "Save Configuration", "action": "toggleVpn" }
+        ]}
+      ]
+    },
+    {
+      "subtabId": "wifiConnectedDevices",
+      "items": [
+        { "type": "customList", "id": "connectedDevices", "label": "Connected Device Information", 
+          "fields": [
+            { "type": "text", "id": "hostname", "label": "Hostname" },
+            { "type": "text", "id": "ip", "label": "IP Adresi" },
+            { "type": "checkbox", "id": "active", "label": "Active?", "readonly":true}
+          ]
+        }
+      ]
+    },
+    {
+      "subtabId": "vpnSettings",
+      "items": [
+        { "type": "categoryDiv", "id": "vpnCredentials", "title": "VPN Kimlik Bilgileri", "items": [
+          { "type": "text", "id": "vpnUsername", "label": "Kullanıcı Adı" },
+          { "type": "password", "id": "vpnPassword", "label": "Şifre" }
+        ]},
+        { "type": "categoryDiv", "id": "vpnSettings", "title": "VPN Ayarları", "items": [
+          { "type": "select", "id": "vpnCountry", "label": "Ülke Seç", "options": [
+            { "value": "us", "text": "United States" },
+            { "value": "uk", "text": "United Kingdom" },
+            { "value": "de", "text": "Germany" },
+            { "value": "fr", "text": "France" },
+            { "value": "tr", "text": "Turkey" }
           ]},
-          { "type": "categoryDiv", "id": "accountDetails", "title": "VPN Status", "items": [
-            { "type": "label", "id": "vpnIpAddress", "text": "IP Address" },
-            { "type": "label", "id": "vpnStatus", "text": "VPN Status" }
-          ]},
-          { "type": "categoryDiv", "id": "accountDetails", "title": "Device Statistics", "items": [
+          { "type": "number", "id": "vpnPort", "label": "Port", "min": 1, "max": 65535 },
+          { "type": "checkbox", "id": "vpnAutoConnect", "label": "Otomatik Bağlan", "checked": false },
+          { "type": "radio", "id": "vpnProtocol", "label": "Protokol Seç", "options": [
+            { "value": "tcp", "text": "TCP", "checked": true },
+            { "value": "udp", "text": "UDP" }
           ]}
-        ]
-      },
-      {
-        "subtabId": "wifiSettings",
-        "items": [
-            { "type": "categoryDiv", "id": "wifiSettings", "title": "Wi-Fi Credentials", "items": [
-              { "type": "text", "id": "ssid", "label": "SSID" },
-              { "type": "password", "id": "wifiPassword", "label": "Wi-Fi Password" },
-              { "type": "button", "id": "saveWifiCredentials", "label": "Save Configuration", "action": "toggleVpn" }
-          ]}
-        ]
-      },
-      {
-        "subtabId": "wifiConnectedDevices",
-        "items": [
-          { "type": "customList", "id": "connectedDevices", "label": "Connected Device Information", 
-            "fields": [
-              { "type": "text", "id": "hostname", "label": "Hostname" },
-              { "type": "text", "id": "ip", "label": "IP Adresi" },
-              { "type": "text", "id": "mac", "label": "MAC Adresi" },
-              { "type": "checkbox", "id": "remove", "label": "Engelle" }
-            ],
-            "dataSource": "devices.json"
-          }
-        ]
-      },
-      {
-        "subtabId": "vpnSettings",
-        "items": [
-          { "type": "categoryDiv", "id": "vpnCredentials", "title": "VPN Kimlik Bilgileri", "items": [
-            { "type": "text", "id": "vpnUsername", "label": "Kullanıcı Adı" },
-            { "type": "password", "id": "vpnPassword", "label": "Şifre" }
-          ]},
-          { "type": "categoryDiv", "id": "vpnSettings", "title": "VPN Ayarları", "items": [
-            { "type": "select", "id": "vpnCountry", "label": "Ülke Seç", "options": [
-              { "value": "us", "text": "United States" },
-              { "value": "uk", "text": "United Kingdom" },
-              { "value": "de", "text": "Germany" },
-              { "value": "fr", "text": "France" },
-              { "value": "tr", "text": "Turkey" }
-            ]},
-            { "type": "number", "id": "vpnPort", "label": "Port", "min": 1, "max": 65535 },
-            { "type": "checkbox", "id": "vpnAutoConnect", "label": "Otomatik Bağlan", "checked": false },
-            { "type": "radio", "id": "vpnProtocol", "label": "Protokol Seç", "options": [
-              { "value": "tcp", "text": "TCP", "checked": true },
-              { "value": "udp", "text": "UDP" }
-            ]}
-          ]},
-          { "type": "listItem", "id": "vpnServerList", "label": "VPN Sunucu Listesi", "items": [
-            { "type": "text", "id": "server1", "label": "Sunucu 1", "value": "vpn1.example.com" },
-            { "type": "text", "id": "server2", "label": "Sunucu 2", "value": "vpn2.example.com" }
-          ], "addButtonLabel": "Yeni Sunucu Ekle"},
-          { "type": "button", "id": "toggleVpnButton", "label": "VPN Aç/Kapat", "action": "toggleVpn" },
-          { "type": "text", "id": "vpnStatus", "label": "Durum", "readonly": true },
-          { "type": "statusLed", "id": "vpnStatusLed", "label": "VPN Durum LED" },
-          { "type": "label", "id": "vpnInfo", "text": "VPN bağlantı durumu yukarıda gösterilir." }
-        ]
-      },
-      {
-        "subtabId": "eventLog",
-        "items": [
-          { "type": "textarea", "id": "systemLogs", "readonly": true, "label": "System Logs"},
-          { "type": "button", "id": "clearButton", "label": "Temizle", "action": "clearLog" }
-        ]
-      },
-      {
-        "subtabId": "fwUpdate",
-        "items": [
-            { "type": "file", "id": "fwUpdateFile", "label": "Select Firmware File (.ext4)", "accept": ".ext4" },
-            { "type": "button", "id": "fwUpdateBtn", "label": "Upload", "action": "updateFw" }
-        ]
-      }
-    ]
-  }
+        ]},
+        { "type": "listItem", "id": "vpnServerList", "label": "VPN Sunucu Listesi", "items": [
+          { "type": "text", "id": "server1", "label": "Sunucu 1", "value": "vpn1.example.com" },
+          { "type": "text", "id": "server2", "label": "Sunucu 2", "value": "vpn2.example.com" }
+        ], "addButtonLabel": "Yeni Sunucu Ekle"},
+        { "type": "button", "id": "toggleVpnButton", "label": "VPN Aç/Kapat", "action": "toggleVpn" },
+        { "type": "text", "id": "vpnStatus", "label": "Durum", "readonly": true },
+        { "type": "statusLed", "id": "vpnStatusLed", "label": "VPN Durum LED" },
+        { "type": "label", "id": "vpnInfo", "text": "VPN bağlantı durumu yukarıda gösterilir." }
+      ]
+    },
+    {
+      "subtabId": "eventLog",
+      "items": [
+        { "type": "textarea", "id": "systemLogs", "readonly": true, "label": "System Logs"},
+        { "type": "button", "id": "clearButton", "label": "Temizle", "action": "clearLog" }
+      ]
+    },
+    {
+      "subtabId": "fwUpdate",
+      "items": [
+          { "type": "textValue", "id": "version", "text": "Current Version" },
+          { "type": "file", "id": "fwUpdateFile", "label": "Select Firmware File (.ext4)", "accept": ".ext4" },
+          { "type": "button", "id": "fwUpdateBtn", "label": "Upload", "action": "updateFw" }
+      ]
+    }
+  ]
+}
