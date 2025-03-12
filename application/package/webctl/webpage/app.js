@@ -32,28 +32,72 @@ app.get('/api/version', (req, res) => {
 });
 
 app.get('/api/overview', (req, res) => {
-    var connectedDeviceCount, ethStatus;
-    fs.readFile('/var/lib/dhcp/dhcpd.leases', 'utf8', (err, data) => {
-        if (err) {
-            console.error("Couldn't read DHCP file:", err);
-            return res.status(500).json({ message: "Couldn't read DHCP file" });
-        }
+    let connectedDeviceCount, ethStatus, internetStatus;
 
-        const leases = [];
-        const registeredIPs = new Map();
-        const leaseBlocks = data.split('lease ').slice(1);
-    });
-    fs.readFile('/etc/version', 'utf8', (err, version) => {
-        if (err) {
-            return res.status(500).send("Couldn't read version file");
+    fs.readFile(configPath, 'utf8', (configErr, configData) => {
+        if (configErr) {
+            console.error("Error reading config file!", configErr);
+            return res.status(500).json({ message: 'Error reading config file' });
         }
-        ethStatus = version.trim();
+        const config = JSON.parse(configData);
+        internetStatus = config.wifi.internetStatus === 'enabled' ? 'Enabled' : 'Disabled!';
+
+        fs.readFile('/var/lib/dhcp/dhcpd.leases', 'utf8', (err, data) => {
+            if (err) {
+                console.error("Couldn't read DHCP file:", err);
+                return res.status(500).json({ message: "Couldn't read DHCP file" });
+            }
+            const leaseBlocks = data.split('lease ').slice(1);
+            connectedDeviceCount = leaseBlocks.length;
+
+            exec("cat /sys/class/net/eth0/carrier", (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`exec error: ${error}`);
+                    ethStatus = 'Error fetching status';
+                    // Hata olsa bile yanıtı gönderiyoruz
+                    return res.json({
+                        connectedDeviceCount: connectedDeviceCount,
+                        ethStatus: ethStatus,
+                        intSharing: internetStatus
+                    });
+                }
+
+                const isEthernetConnected = stdout.trim() === '1';
+                let ipAddress;
+
+                if (isEthernetConnected) {
+                    exec("ifconfig eth0 | grep 'inet ' | awk '{print $2}'", (error, stdout) => {
+                        if (error) {
+                            console.log(`Error fetching network info: ${error.message}`);
+                            ethStatus = 'Error fetching network info';
+                        } else {
+                            ipAddress = stdout.trim().replace('addr:', '');
+                            ethStatus = `Connected. IP: ${ipAddress}`;
+                            console.log("hesaplanan:", ipAddress);
+                        }
+                        // IP adresi alındıktan veya hata oluştuktan sonra yanıtı gönder
+                        res.json({
+                            connectedDeviceCount: connectedDeviceCount,
+                            ethStatus: ethStatus,
+                            intSharing: internetStatus
+                        });
+                    });
+                } else {
+                    ethStatus = 'Not Connected!';
+                    // Ethernet bağlı değilse hemen yanıtı gönder
+                    res.json({
+                        connectedDeviceCount: connectedDeviceCount,
+                        ethStatus: ethStatus,
+                        intSharing: internetStatus
+                    });
+                }
+            });
+        });
     });
-    res.json({ connectedDeviceCount: 5, ethStatus:ethStatus});
 });
 
 // API endpoint to get current configuration
-app.get('/api/wifiConfig', (req, res) => {
+app.get('/api/wifi-config', (req, res) => {
     fs.readFile(configPath, 'utf8', (configErr, configData) => {
         if (configErr) {
             console.error("Error reading config file!", configErr);
@@ -323,10 +367,10 @@ app.get('/api/vpn-status', async (req, res) => {
             }
             
             res.json({
-                isConnected: isConnectedReadFromFile,
-                ip: data.query,
-                country: data.country,
-                city: data.city
+                vpnStatus: isConnectedReadFromFile,
+                vpnIpAddress: data.query,
+                vpnCountry: data.country,
+                vpnCity: data.city
             });
         } else {
             res.status(500).json({ error: "Failed to fetch geolocation data." });
