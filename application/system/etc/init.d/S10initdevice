@@ -6,7 +6,7 @@
 CONFIG_FILE="/data/config.json"
 
 # Path to hostapd.conf
-HOSTAPD_CONF="/etc/hostapd.conf"
+HOSTAPD_CONF="/etc/hostapd_custom.conf"
 
 # Path to VPN auth.txt
 VPN_AUTH_FILE="/etc/openvpn/auth.txt"
@@ -26,7 +26,7 @@ update_hostapd_config(){
     sed -i "s/^ssid=.*/ssid=$SSID/" "$HOSTAPD_CONF"
     sed -i "s/^wpa_passphrase=.*/wpa_passphrase=$PASSWORD/" "$HOSTAPD_CONF"
 
-	echo "Updated hostapd.conf with SSID: $SSID and password."
+	echo "Updated hostapd_custom.conf with SSID: $SSID and password."
 }
 
 update_vpn_auth(){
@@ -87,9 +87,10 @@ case $1 in
 		cp /etc/default_hostapd.conf $HOSTAPD_CONF
 	fi
 
-	if ! [ -e /etc/dhcp.conf ]; then
+	if ! [ -e /etc/dhcpd.conf ]; then
 		cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpd.conf
 	fi
+	cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpcd.conf
 
 	update_hostapd_config
 	update_vpn_auth

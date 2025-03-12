@@ -114,7 +114,7 @@ app.get('/api/wifi-config', (req, res) => {
 
 app.post('/api/wifiConfig', (req, res) => {
     const { WifiName, WifiPassword, InternetStatus} = req.body;
-    const hostapdPath = '/etc/hostapd.conf';
+    const hostapdPath = '/etc/hostapd_custom.conf';
 
     // Read the current configuration
     fs.readFile(configPath, 'utf8', (configErr, configData) => {

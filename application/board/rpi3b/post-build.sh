@@ -23,7 +23,7 @@ cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/nordvpn_ovpn/* ${TARGET_D
 
 rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn
-
+rm -f ${TARGET_DIR}/etc/hostapd.conf
 
 BUILD_INFO_FILE=${BR2_EXTERNAL_APPLICATION_PATH}"/../version"
 CURRENT_DATE=$(date +%Y-%m-%d)

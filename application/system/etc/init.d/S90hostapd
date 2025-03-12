@@ -3,7 +3,7 @@
 case $1 in
     start)
 	printf "Starting hostapd: "
-	start-stop-daemon --start -q -p /var/run/hostapd.pid --exec hostapd /etc/hostapd.conf &
+	start-stop-daemon --start -q -p /var/run/hostapd.pid --exec hostapd /etc/hostapd_custom.conf > /var/log/hostapd.log 2>&1 &
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 	ntpd -q -g # Update time
