@@ -43,7 +43,7 @@ unsigned long get_ifc_speeds(const char *iface, unsigned long *rx_bytes, unsigne
 
     FILE *fileRx = fopen(path, "r");
     if (fileRx == NULL) {
-        perror("fopen error");
+        perror("Failed to open rx_bytes file");
         exit(EXIT_FAILURE);
     }
     fscanf(fileRx, "%lu", rx_bytes);
@@ -52,7 +52,7 @@ unsigned long get_ifc_speeds(const char *iface, unsigned long *rx_bytes, unsigne
     snprintf(path, sizeof(path), "/sys/class/net/%s/statistics/tx_bytes", iface);
     FILE *fileTx = fopen(path, "r");
     if (fileTx == NULL) {
-        perror("fopen error");
+        perror("Failed to open tx_bytes file");
         exit(EXIT_FAILURE);
     }
     fscanf(fileTx, "%lu", tx_bytes);
@@ -141,7 +141,7 @@ void write_json_file(const NetworkInterfaces netIf) {
 
     FILE *file = fopen(OUTPUT_FILE, "w");
     if (file) {
-        fprintf(file, "%s", json_object_to_json_string(root));
+        fprintf(file, "%s", json_object_to_json_string_ext(root, JSON_C_TO_STRING_PRETTY));
         fclose(file);
     }
     json_object_put(root);

@@ -18,4 +18,3 @@ define NETWORK_MONITOR_INSTALL_INIT_SYSV
 endef
 
 $(eval $(generic-package))
-

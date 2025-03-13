@@ -1,6 +1,9 @@
 config BR2_PACKAGE_NETWORK_MONITOR
     bool "network_monitor"
-		default y
+    default y
     depends on BR2_PACKAGE_JSON_C
     help
-      Measures the network speed test.
+      Measures the network speed and logs it to a JSON file.
+
+      This tool monitors the network interfaces (ethernet and wifi)
+      and records the upload/download speeds in Mbps.

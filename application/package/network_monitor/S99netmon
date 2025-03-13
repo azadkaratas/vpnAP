@@ -1,22 +1,35 @@
 #!/bin/sh
 
-case $1 in
+DAEMON=/usr/bin/network_monitor
+PIDFILE=/var/run/network_monitor.pid
+
+case "$1" in
     start)
-	printf "Starting network_monitor: "
-	start-stop-daemon --start --background -p /var/run/network_monitor.pid --exec /usr/bin/network_monitor
-	[ $? = 0 ] && echo "OK" || echo "FAIL"
-	;;
+        printf "Starting network_monitor: "
+        start-stop-daemon --start --quiet --background --pidfile "$PIDFILE" --exec "$DAEMON"
+        if [ $? -eq 0 ]; then
+            echo "OK"
+        else
+            echo "FAIL"
+        fi
+        ;;
     stop)
-	printf "Stopping network_monitor: "
-	start-stop-daemon -K -q -p /var/run/network_monitor.pid
-	[ $? = 0 ] && echo "OK" || echo "FAIL"
-	;;
+        printf "Stopping network_monitor: "
+        start-stop-daemon --stop --quiet --pidfile "$PIDFILE"
+        if [ $? -eq 0 ]; then
+            echo "OK"
+        else
+            echo "FAIL"
+        fi
+        ;;
     restart)
-	$0 stop
-	$0 start
-	;;
+        $0 stop
+        $0 start
+        ;;
     *)
-	echo "Usage: $0 {start|stop|restart}"
-	exit 1
-	;;
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
 esac
+
+exit 0
