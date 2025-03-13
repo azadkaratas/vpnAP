@@ -42,19 +42,61 @@ app.get('/api/overview', (req, res) => {
         const config = JSON.parse(configData);
         internetStatus = config.wifi.internetStatus === 'enabled' ? 'Enabled' : 'Disabled!';
 
+
+
         fs.readFile('/var/lib/dhcp/dhcpd.leases', 'utf8', (err, data) => {
             if (err) {
                 console.error("Couldn't read DHCP file:", err);
                 return res.status(500).json({ message: "Couldn't read DHCP file" });
             }
+
+            const leases = [];
+            const registeredIPs = new Map();
             const leaseBlocks = data.split('lease ').slice(1);
-            connectedDeviceCount = leaseBlocks.length;
+            const now = new Date(); // Current time for duration calculation
+
+            leaseBlocks.forEach(block => {
+                const lines = block.trim().split('\n');
+                const lease = {};
+
+                lease.ip = lines[0].trim().split(' ')[0]; // IP from "lease <IP> {"
+                lines.forEach(line => {
+                    if (line.includes('client-hostname')) {
+                        lease.hostname = line.split('"')[1] || 'Unknown';
+                    } else if (line.includes('binding state active')) {
+                        lease.active = true;
+                    } else if (line.includes('starts')) {
+                        // Parse "starts 3 2025/03/05 21:40:46;"
+                        const startStr = line.split('starts ')[1]?.replace(';', '').trim();
+                        if (startStr) {
+                            const parts = startStr.split(' '); // ["3", "2025/03/05", "21:40:46"]
+                            if (parts.length >= 2) {
+                                const dateTime = `${parts[1]} ${parts[2]}`; // "2025/03/05 21:40:46"
+                                // Replace slashes with dashes and ensure UTC
+                                lease.start = new Date(dateTime.replace(/\//g, '-') + ' UTC');
+                                if (!isNaN(lease.start)) {
+                                    const durationMs = now - lease.start;
+                                    lease.connectedMinutes = Math.floor(durationMs / 60000); // Convert ms to minutes
+                                } else {
+                                    console.error(`Invalid start time for ${lease.ip}: ${dateTime}`);
+                                    lease.connectedMinutes = 0; // Fallback
+                                }
+                            }
+                        }
+                    }
+                });
+                if (lease.active && lease.ip !== "192.168.2.10") {
+                    registeredIPs.set(lease.ip, lease);
+                }
+            });
+
+            registeredIPs.forEach(value => leases.push(value));
+            connectedDeviceCount = registeredIPs.size;
 
             exec("cat /sys/class/net/eth0/carrier", (error, stdout, stderr) => {
                 if (error) {
                     console.error(`exec error: ${error}`);
                     ethStatus = 'Error fetching status';
-                    // Hata olsa bile yanıtı gönderiyoruz
                     return res.json({
                         connectedDeviceCount: connectedDeviceCount,
                         ethStatus: ethStatus,
@@ -73,9 +115,7 @@ app.get('/api/overview', (req, res) => {
                         } else {
                             ipAddress = stdout.trim().replace('addr:', '');
                             ethStatus = `Connected. IP: ${ipAddress}`;
-                            console.log("hesaplanan:", ipAddress);
                         }
-                        // IP adresi alındıktan veya hata oluştuktan sonra yanıtı gönder
                         res.json({
                             connectedDeviceCount: connectedDeviceCount,
                             ethStatus: ethStatus,
@@ -84,7 +124,6 @@ app.get('/api/overview', (req, res) => {
                     });
                 } else {
                     ethStatus = 'Not Connected!';
-                    // Ethernet bağlı değilse hemen yanıtı gönder
                     res.json({
                         connectedDeviceCount: connectedDeviceCount,
                         ethStatus: ethStatus,
@@ -93,6 +132,7 @@ app.get('/api/overview', (req, res) => {
                 }
             });
         });
+
     });
 });
 
@@ -288,9 +328,9 @@ app.get('/api/get-vpn-auth-credentials', (req, res) => {
         }
         const config = JSON.parse(configData);
         res.json({
-            nordvpnUsername: config.vpn.nordvpn.username,
-            nordvpnPassword: config.vpn.nordvpn.vpnPassword,
-            nordvpnCountry: config.vpn.nordvpn.country
+            vpnUsername: config.vpn.nordvpn.username,
+            vpnPassword: config.vpn.nordvpn.vpnPassword,
+            vpnCountry: config.vpn.nordvpn.country
         });
     });
 });

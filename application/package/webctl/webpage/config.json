@@ -21,7 +21,8 @@
     {
       "title": "VPN",
       "subtabs": [
-        { "id": "vpnSettings", "title": "VPN Settings", "description": "Configure your VPN credentials and settings." }
+        { "id": "vpnSettings", "title": "VPN Settings", "description": "Configure your VPN credentials and settings.",
+          "fetchFromAPI": "/api/get-vpn-auth-credentials"}
       ]
     },
     {
@@ -54,7 +55,8 @@
           "fetchFromAPI": "/api/vpn-status",
           "items": [
             { "type": "textValue", "id": "vpnIpAddress", "text": "IP Address" },
-            { "type": "textValue", "id": "vpnStatus", "text": "VPN Status" }
+            { "type": "textValue", "id": "vpnStatus", "text": "VPN Status" },
+            { "type": "statusLed", "id": "vpnStatus", "text": "VPN Status" }
           ]
         },
         {
@@ -91,8 +93,8 @@
           "label": "Connected Device Information",
           "fetchFromAPI": "/api/connected-devices",
           "fields": [
-            { "type": "text", "id": "hostname", "label": "Hostname" },
-            { "type": "text", "id": "ip", "label": "IP Adresi" },
+            { "type": "text", "id": "hostname", "label": "Hostname", "readonly": true},
+            { "type": "text", "id": "ip", "label": "IP Address", "readonly": true},
             { "type": "checkbox", "id": "active", "label": "Active?", "readonly": true }
           ]
         }
@@ -105,7 +107,6 @@
           "type": "categoryDiv",
           "id": "vpnCredentials",
           "title": "VPN Credentials",
-          "dataSource": "vpn.json",
           "items": [
             { "type": "text", "id": "vpnUsername", "label": "Username" },
             { "type": "password", "id": "vpnPassword", "label": "Password" }
@@ -113,14 +114,13 @@
         },
         {
           "type": "categoryDiv",
-          "id": "vpnSettings",
+          "id": "vpnCountryPortSettings",
           "title": "VPN Settings",
-          "fetchFromAPI": "/api/vpn-settings",
           "items": [
             {
               "type": "select",
               "id": "vpnCountry",
-              "label": "Ülke Seç",
+              "label": "Select Country",
               "options": [
                 { "value": "us", "text": "United States" },
                 { "value": "uk", "text": "United Kingdom" },
@@ -129,7 +129,15 @@
                 { "value": "tr", "text": "Turkey" }
               ]
             },
-            { "type": "number", "id": "vpnPort", "label": "Port", "min": 1, "max": 65535 },
+            {
+              "type": "select",
+              "id": "vpnPort",
+              "label": "Select Port",
+              "options": [
+                { "value": "udp", "text": "UDP" },
+                { "value": "tcp", "text": "TCP" }
+              ]
+            },
             { "type": "checkbox", "id": "vpnAutoConnect", "label": "Otomatik Bağlan", "checked": false }
           ]
         },
@@ -148,13 +156,8 @@
         },
         {
           "type": "statusLed",
-          "id": "vpnStatusLed",
+          "id": "vpnStatus",
           "fetchFromAPI": "/api/vpn-status"
-        },
-        {
-          "type": "label",
-          "id": "vpnInfo",
-          "text": "VPN bağlantı durumu yukarıda gösterilir."
         }
       ]
     },
