@@ -608,3 +608,14 @@ app.post('/api/update-firmware', (req, res) => {
         res.json({ success: true, message: 'Firmware updated successfully.' });
     });
 });
+const fs_asenkron = require('fs').promises; // Dosya sistemi için asenkron metodlar
+app.get('/api/readfile/var/log/messages', async (req, res) => {
+    const filePath = '/var/log/messages'; // Sistem dosyasını hedefle
+    try {
+        const content = await fs_asenkron.readFile(filePath, { encoding: 'utf8' }); // Doğru asenkron kullanım
+        res.send(content); // Dosya içeriğini metin olarak gönder
+    } catch (error) {
+        console.error(`Dosya okunamadı: ${filePath}`, error);
+        res.status(500).send(`Hata: Dosya okunamadı - ${error.message}`);
+    }
+  });

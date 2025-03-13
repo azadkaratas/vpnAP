@@ -165,17 +165,9 @@
       "subtabId": "eventLog",
       "items": [
         {
-          "type": "textarea",
-          "id": "systemLogs",
-          "readonly": true,
-          "label": "System Logs",
-          "fetchFromAPI": "/api/event-log"
-        },
-        {
-          "type": "button",
-          "id": "clearButton",
-          "label": "Temizle",
-          "action": "clearLog"
+          "type": "fileReader",
+          "id": "logReader",
+          "fetchFromAPI": "/api/readfile/var/log/messages"
         }
       ]
     },
