@@ -8,28 +8,48 @@
     {
       "title": "Overview",
       "id": "overview",
-      "description": "General overview of the device",
+      "description": "View a general summary of the device's status, including network details, VPN connectivity, and system statistics.",
       "subtabs": []
     },
     {
       "title": "Wi-Fi",
       "subtabs": [
-        { "id": "wifiSettings", "title": "Settings", "description": "Configure your Wi-Fi settings." },
-        { "id": "wifiConnectedDevices", "title": "Connected Devices" }
+        {
+          "id": "wifiSettings",
+          "title": "Settings",
+          "description": "Adjust your Wi-Fi network settings, such as SSID and password, to manage wireless connectivity."
+        },
+        {
+          "id": "wifiConnectedDevices",
+          "title": "Connected Devices",
+          "description": "See a list of devices currently connected to your Wi-Fi network, including their hostnames, IP addresses, and activity status."
+        }
       ]
     },
     {
       "title": "VPN",
       "subtabs": [
-        { "id": "vpnSettings", "title": "VPN Settings", "description": "Configure your VPN credentials and settings.",
-          "fetchFromAPI": "/api/get-vpn-auth-credentials"}
+        {
+          "id": "vpnSettings",
+          "title": "VPN Settings",
+          "description": "Set up and manage your VPN connection by entering credentials, selecting a country, choosing a protocol, and enabling auto-connect options.",
+          "fetchFromAPI": "/api/get-vpn-auth-credentials"
+        }
       ]
     },
     {
       "title": "System",
       "subtabs": [
-        { "id": "eventLog", "title": "Event Logs" },
-        { "id": "fwUpdate", "title": "Firmware Update" }
+        {
+          "id": "eventLog",
+          "title": "Event Logs",
+          "description": "Review detailed system event logs to monitor device activity, troubleshoot issues, and track system events over time."
+        },
+        {
+          "id": "fwUpdate",
+          "title": "Firmware Update",
+          "description": "Check the current firmware version and upload a new firmware file to keep your device up-to-date with the latest features and security patches."
+        }
       ]
     }
   ],
