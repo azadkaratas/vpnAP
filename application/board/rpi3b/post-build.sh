@@ -19,7 +19,7 @@ cp ${BR2_EXTERNAL_APPLICATION_PATH}/com.embedlinux.messenger.conf ${TARGET_DIR}/
 
 mkdir -p ${TARGET_DIR}/etc/openvpn/
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/auth.txt ${TARGET_DIR}/etc/openvpn/
-cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/nordvpn_ovpn/* ${TARGET_DIR}/data/openvpn/
+cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/nordvpn_ovpn/* ${TARGET_DIR}/etc/openvpn/
 
 rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn

@@ -279,10 +279,10 @@ app.get('/api/device-status', (req, res) => {
                 return res.json({ message: 'Error fetching uptime' });
             }
 
-            const uptime = `${Math.floor(parseInt(stdout.trim()) / 60)}`;
+            const uptime = `${Math.floor(parseInt(stdout.trim()) / 60)} minutes`;
 
             exec("top -bn1 | grep 'CPU:' | awk '{print $2}' | head -n 1 | sed 's/%//'", (error, stdout) => {
-                const cpuUsage = stdout.trim();
+                const cpuUsage = stdout.trim() + '%';
 
                 exec("free -m | grep Mem | awk '{print ($3/$2) * 100.0}'", (error, stdout) => {
                     const memoryUsage = `${parseFloat(stdout.trim()).toFixed(2)}%`;
@@ -301,7 +301,7 @@ app.get('/api/device-status', (req, res) => {
                         const diskFreeSpace = outputLines[2];
 
                         exec("cat /sys/class/thermal/thermal_zone0/temp", (error, stdout) => {
-                            const cpuTemperature = stdout.trim();
+                            const cpuTemperature = stdout.trim()/1000 + ' °C';
                             res.json({
                                 ipAddress,
                                 uptime,
@@ -409,8 +409,7 @@ app.get('/api/vpn-status', async (req, res) => {
             res.json({
                 vpnStatus: isConnectedReadFromFile,
                 vpnIpAddress: data.query,
-                vpnCountry: data.country,
-                vpnCity: data.city
+                vpnCountry: data.country+"/"+data.city
             });
         } else {
             res.status(500).json({ error: "Failed to fetch geolocation data." });

@@ -55,16 +55,21 @@
           "fetchFromAPI": "/api/vpn-status",
           "items": [
             { "type": "textValue", "id": "vpnIpAddress", "text": "IP Address" },
-            { "type": "textValue", "id": "vpnStatus", "text": "VPN Status" },
-            { "type": "statusLed", "id": "vpnStatus", "text": "VPN Status" }
+            { "type": "textValue", "id": "vpnCountry", "text": "Connected to" },
+            { "type": "statusLed", "id": "vpnStatus", "label": "VPN Status:" }
           ]
         },
         {
           "type": "categoryDiv",
-          "id": "deviceStats",
+          "id": "deviceStatus",
           "title": "Device Statistics",
-          "fetchFromAPI": "/api/device-stats",
-          "items": []
+          "fetchFromAPI": "/api/device-status",
+          "items": [
+            { "type": "textValue", "id": "uptime", "text": "Uptime" },
+            { "type": "textValue", "id": "memoryUsage", "text": "Memory Usage" },
+            { "type": "textValue", "id": "diskFreeSpace", "text": "Disk Free Space" },
+            { "type": "textValue", "id": "cpuUsage", "text": "CPU Usage" },
+            { "type": "textValue", "id": "cpuTemperature", "text": "CPU Temperature" }]
         }
       ]
     },
@@ -138,26 +143,20 @@
                 { "value": "tcp", "text": "TCP" }
               ]
             },
-            { "type": "checkbox", "id": "vpnAutoConnect", "label": "Otomatik Bağlan", "checked": false }
+            { "type": "checkbox", "id": "vpnAutoConnect", "label": "Auto Connect", "checked": false }
           ]
+        },
+        {
+          "type": "statusLed",
+          "id": "vpnStatus",
+          "label": "Connection Status:",
+          "fetchFromAPI": "/api/vpn-status"
         },
         {
           "type": "button",
           "id": "toggleVpnButton",
           "label": "VPN Aç/Kapat",
           "action": "toggleVpn"
-        },
-        {
-          "type": "text",
-          "id": "vpnStatus",
-          "label": "Durum",
-          "fetchFromAPI": "/api/vpn-status",
-          "readonly": true
-        },
-        {
-          "type": "statusLed",
-          "id": "vpnStatus",
-          "fetchFromAPI": "/api/vpn-status"
         }
       ]
     },
