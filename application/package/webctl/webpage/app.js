@@ -6,7 +6,9 @@ const path = require('path');
 const app = express();
 var DBus = require('dbus');
 const multer = require('multer');
-
+const util = require('util');
+const execPromise = util.promisify(exec);
+const fsp = require('fs').promises;
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
 
@@ -146,13 +148,12 @@ app.get('/api/wifi-config', (req, res) => {
         const config = JSON.parse(configData);
         res.json({
             WifiName: config.wifi.name,
-            WifiPassword: config.wifi.password,
-            InternetStatus: config.wifi.internetStatus
+            WifiPassword: config.wifi.password
         });
     });
 });
 
-app.post('/api/wifiConfig', (req, res) => {
+app.post('/api/wifi-config', (req, res) => {
     const { WifiName, WifiPassword, InternetStatus} = req.body;
     const hostapdPath = '/etc/hostapd_custom.conf';
 
@@ -217,6 +218,87 @@ app.post('/api/wifiConfig', (req, res) => {
         });
     });
 });
+
+app.get('/api/wifi-channel', (req, res) => {
+    const hostapdPath = '/etc/hostapd_custom.conf';
+    let intSharing = 0;
+    fs.readFile(hostapdPath, 'utf8', (err, data) => {
+        const lines = data.split('\n');
+        let hwMode = '';
+        let channel = '';
+        for (const line of lines) {
+            if (line.startsWith('hw_mode=')) {
+                hwMode = line.split('=')[1].trim();
+            } else if (line.startsWith('channel=')) {
+                channel = parseInt(line.split('=')[1].trim(), 10);
+            }
+        }
+        console.log(hwMode, channel);
+        let band = '';
+        if (hwMode === 'g' || (hwMode === 'b' && channel >= 1 && channel <= 13)) {
+            band = 'twog';
+        } else if (hwMode === 'a' && channel >= 36) {
+            band = 'fiveg';
+        } else {
+            return res.status(400).json({ message: 'Unknown Wi-Fi band' });
+        }
+
+        exec("cat /proc/sys/net/ipv4/ip_forward", (error, stdout, stderr) => {
+            if (error) {
+                console.error(`exec error: ${error}`);
+                return;
+            }
+            intSharing = stdout.trim() === '1';
+            res.json({ WifiFreq: band, WifiInternetSharing: intSharing});
+        });
+    });
+});
+
+app.post('/api/wifi-channel', async (req, res) => {
+    const { WifiFreq, WifiInternetSharing } = req.body;
+    const hostapdPath = '/etc/hostapd_custom.conf';
+  
+    // Input doğrulama
+    if (!WifiFreq || (WifiFreq !== 'twog' && WifiFreq !== 'fiveg')) {
+      return res.status(400).json({ message: 'Geçersiz WifiFreq: "twog" veya "fiveg" olmalı' });
+    }
+    if (typeof WifiInternetSharing !== 'boolean') {
+      return res.status(400).json({ message: 'WifiInternetSharing true veya false olmalı' });
+    }
+  
+    try {
+      const data = await fsp.readFile(hostapdPath, 'utf8');
+      const newSettings = {
+        'twog': { hwMode: 'g', channel: 6 },  // 2.4 GHz
+        'fiveg': { hwMode: 'a', channel: 36 } // 5 GHz
+      };
+  
+      const { hwMode, channel } = newSettings[WifiFreq];
+  
+      const updatedData = data
+        .replace(/(hw_mode=).*/g, `hw_mode=${hwMode}`)
+        .replace(/(channel=).*/g, `channel=${channel}`);
+  
+      await fsp.writeFile(hostapdPath, updatedData, 'utf8');
+      console.log('hostapd file updated successfully.');
+  
+      const ipForwardValue = WifiInternetSharing ? '1' : '0';
+      await execPromise(`echo ${ipForwardValue} > /proc/sys/net/ipv4/ip_forward`);
+      console.log(`Internet sharing set to: ${WifiInternetSharing}`);
+  
+      await execPromise('/etc/init.d/S90hostapd restart');
+      console.log('hostapd restarted successfully.');
+
+      res.json({
+        message: 'Wi-Fi settings updated successfully.',
+        WifiFreq,
+        WifiInternetSharing
+      });
+    } catch (error) {
+      console.error(`Error: ${error.message}`);
+      res.status(500).json({ message: `Error: ${error.message}` });
+    }
+  });
 
 app.post('/api/restart', (req, res) => {
     exec('( sleep 1 ; reboot ) & ', (error, stdout, stderr) => {
@@ -607,14 +689,13 @@ app.post('/api/update-firmware', (req, res) => {
         res.json({ success: true, message: 'Firmware updated successfully.' });
     });
 });
-const fs_asenkron = require('fs').promises; // Dosya sistemi için asenkron metodlar
+const fs_asenkron = require('fs').promises;
 app.get('/api/readfile/var/log/messages', async (req, res) => {
-    const filePath = '/var/log/messages'; // Sistem dosyasını hedefle
+    const filePath = '/var/log/messages';
     try {
-        const content = await fs_asenkron.readFile(filePath, { encoding: 'utf8' }); // Doğru asenkron kullanım
-        res.send(content); // Dosya içeriğini metin olarak gönder
+        const content = await fs_asenkron.readFile(filePath, { encoding: 'utf8' });
+        res.send(content);
     } catch (error) {
-        console.error(`Dosya okunamadı: ${filePath}`, error);
-        res.status(500).send(`Hata: Dosya okunamadı - ${error.message}`);
+        res.status(500).send(`Error at file reading - ${error.message}`);
     }
   });

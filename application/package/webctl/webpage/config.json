@@ -90,7 +90,8 @@
             { "type": "textValue", "id": "diskFreeSpace", "text": "Disk Free Space" },
             { "type": "textValue", "id": "cpuUsage", "text": "CPU Usage" },
             { "type": "textValue", "id": "cpuTemperature", "text": "CPU Temperature" }]
-        }
+        },
+        { "type": "button", "id": "restartDevice", "label": "Restart Device", "action": "/api/restart" }
       ]
     },
     {
@@ -104,7 +105,22 @@
           "items": [
             { "type": "text", "id": "WifiName", "label": "SSID" },
             { "type": "password", "id": "WifiPassword", "label": "Wi-Fi Password" },
-            { "type": "button", "id": "saveWifiCredentials", "label": "Save Configuration", "action": "saveWifi" }
+            { "type": "button", "id": "saveWifiCredentials", "label": "Save Credentials", "action": "/api/wifi-config" }
+          ]
+        },
+        {
+          "type": "categoryDiv",
+          "id": "wifiChannel",
+          "title": "Wi-Fi Options",
+          "fetchFromAPI": "/api/wifi-channel",
+          "items": [
+            { "type": "select", "id": "WifiFreq", "label": "Frequency", 
+            "options": [
+              { "value": "twog", "text": "2.4GHz" },
+              { "value": "fiveg", "text": "5GHz" }
+            ]},
+            { "type": "checkbox", "id": "WifiInternetSharing", "label": "Internet Sharing" },
+            { "type": "button", "id": "saveWifiOptions", "label": "Save Options", "action": "/api/wifi-channel" }
           ]
         }
       ]
@@ -175,7 +191,7 @@
         {
           "type": "button",
           "id": "toggleVpnButton",
-          "label": "VPN Aç/Kapat",
+          "label": "Toggle VPN",
           "action": "toggleVpn"
         }
       ]
@@ -209,7 +225,7 @@
           "type": "button",
           "id": "fwUpdateBtn",
           "label": "Upload",
-          "action": "updateFw"
+          "action": "update-firmware"
         }
       ]
     }
