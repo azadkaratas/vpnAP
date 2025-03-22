@@ -1,0 +1,24 @@
+/* custom.css */
+
+/* Sidebar rengini değiştirme */
+.sidebar {
+    background-color: #2c3e50;
+    color: white;
+  }
+  
+  /* Accordion butonlarını özelleştirme */
+  .accordion-button {
+    background-color: #34495e;
+    color: white;
+  }
+  
+  .accordion-button:hover {
+    background-color: #1abc9c;
+  }
+  
+  /* İçerik alanındaki başlık rengini değiştirme */
+  .sub-content-header {
+    color: #e74c3c;
+    font-size: 1.5rem;
+  }
+  

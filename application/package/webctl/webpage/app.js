@@ -361,7 +361,7 @@ app.get('/api/device-status', (req, res) => {
                 return res.json({ message: 'Error fetching uptime' });
             }
 
-            const uptime = `${Math.floor(parseInt(stdout.trim()) / 60)} minutes`;
+            const uptime = `${Math.floor(parseInt(stdout.trim()) / 3600)}h ${(Math.floor(parseInt(stdout.trim()) / 60) % 60)}m`;
 
             exec("top -bn1 | grep 'CPU:' | awk '{print $2}' | head -n 1 | sed 's/%//'", (error, stdout) => {
                 const cpuUsage = stdout.trim() + '%';
