@@ -1,5 +1,6 @@
 #!/bin/sh
 
+LOG_FILE="/var/log/vpnmgr.log"
 VPN_CONFIG="/etc/openvpn/tr51.nordvpn.com.udp1194.ovpn"
 AUTH_FILE="/etc/openvpn/auth.txt"
 PID_FILE="/var/run/openvpn.pid"
@@ -7,36 +8,47 @@ VPN_STATUS_FILE="/tmp/openvpn/status"
 TUN_IF="tun0"
 ETH_IF="eth0"
 
+log() {
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
 start() {
-    echo "Starting OpenVPN..."
-    
+    log "Starting OpenVPN..."
+    ntpd -q -g & 2>&1 | tee -a "$LOG_FILE"
+
     modprobe tun
 
-    echo "Configuring NAT..."
+    log "Configuring NAT..."
     iptables -t nat -A POSTROUTING -o "$TUN_IF" -j MASQUERADE
     iptables -A FORWARD -i "$TUN_IF" -o "$ETH_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT
     iptables -A FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
 
     start-stop-daemon --start -q -b -m -p "$PID_FILE" --exec /usr/sbin/openvpn -- \
         --config "$VPN_CONFIG" --auth-user-pass "$AUTH_FILE"
+
     mkdir -p /tmp/openvpn && echo 1 > $VPN_STATUS_FILE
+
+    log "OpenVPN started successfully."
 }
 
 stop() {
-    echo "Stopping OpenVPN..."
+    log "Stopping OpenVPN..."
 
     start-stop-daemon --stop -q -p "$PID_FILE"
 
-    echo "Clearing NAT configuration..."
+    log "Clearing NAT configuration..."
     iptables -t nat -D POSTROUTING -o "$TUN_IF" -j MASQUERADE
     iptables -D FORWARD -i "$TUN_IF" -o "$ETH_IF" -m state --state RELATED,ESTABLISHED -j ACCEPT
     iptables -D FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
 
     rm -f "$PID_FILE"
     mkdir -p /tmp/openvpn && echo 0 > $VPN_STATUS_FILE
+
+    log "OpenVPN stopped."
 }
 
 restart() {
+    log "Restarting OpenVPN..."
     stop
     sleep 1
     start
@@ -46,13 +58,13 @@ status() {
     if [ -e "$PID_FILE" ]; then
         PID=$(cat "$PID_FILE")
         if [ -d "/proc/$PID" ]; then
-            echo "VPN is running."
+            log "VPN is running."
         else
-            echo "VPN is not running."
+            log "VPN is not running."
             rm -f "$PID_FILE"
         fi
     else
-        echo "VPN is not running."
+        log "VPN is not running."
     fi
 }
 
@@ -70,7 +82,7 @@ case "$1" in
         status
         ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status}"
+        log "Usage: $0 {start|stop|restart|status}"
         exit 1
         ;;
 esac
