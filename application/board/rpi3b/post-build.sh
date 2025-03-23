@@ -8,7 +8,7 @@ cp ${BR2_EXTERNAL_APPLICATION_PATH}/board/rpi3b/config.txt ${TARGET_DIR}/../imag
 
 cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/system/* ${TARGET_DIR}/
 
-cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/webpage/json-web-gen/* ${TARGET_DIR}/usr/html/
+cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/json-web-gen/* ${TARGET_DIR}/usr/html/
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/webpage/* ${TARGET_DIR}/usr/html/
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/nginx.conf ${TARGET_DIR}/etc/nginx/nginx.conf
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/S99webctl ${TARGET_DIR}/etc/init.d/S99webctl
