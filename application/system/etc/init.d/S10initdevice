@@ -87,10 +87,8 @@ case $1 in
 		cp /etc/default_hostapd.conf $HOSTAPD_CONF
 	fi
 
-	if ! [ -e /etc/dhcpd.conf ]; then
-		cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpd.conf
-	fi
-	cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpcd.conf
+	cp /etc/dhcp/default_dhcpd.conf  /etc/dhcpd.conf
+	cp /etc/dhcp/default_dhcpcd.conf /etc/dhcpcd.conf
 
 	update_hostapd_config
 	update_vpn_auth

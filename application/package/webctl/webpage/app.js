@@ -87,7 +87,7 @@ app.get('/api/overview', (req, res) => {
                         }
                     }
                 });
-                if (lease.active && lease.ip !== "192.168.2.10") {
+                if (lease.active) {
                     registeredIPs.set(lease.ip, lease);
                 }
             });
@@ -593,7 +593,7 @@ app.get('/api/connected-devices', (req, res) => {
                     }
                 }
             });
-            if (lease.active && lease.ip !== "192.168.2.10") {
+            if (lease.active) {
                 registeredIPs.set(lease.ip, lease);
             }
         });
