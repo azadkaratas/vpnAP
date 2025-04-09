@@ -12,6 +12,7 @@ cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/json-web-gen/* ${TARGET_DIR}/usr/htm
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/webpage/* ${TARGET_DIR}/usr/html/
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/nginx.conf ${TARGET_DIR}/etc/nginx/nginx.conf
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/S99webctl ${TARGET_DIR}/etc/init.d/S99webctl
+cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/qt-gui/S99qtgui ${TARGET_DIR}/etc/init.d/S99qtgui
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/openvpn/S95vpnmgr ${TARGET_DIR}/etc/init.d/S95vpnmgr
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/network_monitor/S99netmon ${TARGET_DIR}/etc/init.d/S99netmon
 
@@ -25,6 +26,7 @@ rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn
 rm -f ${TARGET_DIR}/etc/hostapd.conf
 
+# Version info
 BUILD_INFO_FILE=${BR2_EXTERNAL_APPLICATION_PATH}"/../version"
 CURRENT_DATE=$(date +%Y-%m-%d)
 

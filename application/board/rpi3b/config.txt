@@ -1,9 +1,3 @@
-# Please note that this is only a sample, we recommend you to change it to fit
-# your needs.
-# You should override this file using BR2_PACKAGE_RPI_FIRMWARE_CONFIG_FILE.
-# See http://buildroot.org/manual.html#rootfs-custom
-# and http://elinux.org/RPiconfig for a description of config.txt syntax
-
 start_file=start.elf
 fixup_file=fixup.dat
 
@@ -19,11 +13,11 @@ disable_overscan=1
 # How much memory in MB to assign to the GPU on Pi models having
 # 256, 512 or 1024 MB total memory
 gpu_mem_256=100
-gpu_mem_512=100
-gpu_mem_1024=100
+gpu_mem_512=128
+gpu_mem_1024=256
 
-# Enable UART0 for serial console on ttyAMA0
-dtoverlay=miniuart-bt
+framebuffer_width=480
+framebuffer_height=320
 
 # enable autoprobing of Bluetooth driver without need of hciattach/btattach
 dtparam=krnbt=on
@@ -31,24 +25,3 @@ dtoverlay=dwc2
 
 # enable 64bits support
 arm_64bit=1
-
-# disable HDMI and Bluetooth (saves power)
-dtoverlay=vc4-kms-v3d,nohdmi,disable-bt
-max_framebuffers=1
-disable_fw_kms_setup=1
-disable_overscan=1
-
-# disable composite video output
-enable_tvout=0
-
-# Disable the PWR LED
-dtparam=pwr_led_trigger=none
-dtparam=pwr_led_activelow=off
-
-# Disable the Activity LED
-dtparam=act_led_trigger=none
-dtparam=act_led_activelow=off
-
-# Disable ethernet port LEDs
-dtparam=eth_led0=4
-dtparam=eth_led1=4

@@ -1,0 +1,35 @@
+#!/bin/sh
+
+DAEMON=/usr/bin/qt-gui
+PIDFILE=/var/run/qt-gui.pid
+
+case "$1" in
+    start)
+        printf "Starting qt_gui: "
+        start-stop-daemon --start --quiet --background --pidfile "$PIDFILE" --exec "$DAEMON" -- -platform linuxfb
+        if [ $? -eq 0 ]; then
+            echo "OK"
+        else
+            echo "FAIL"
+        fi
+        ;;
+    stop)
+        printf "Stopping qt_gui: "
+        start-stop-daemon --stop --quiet --pidfile "$PIDFILE"
+        if [ $? -eq 0 ]; then
+            echo "OK"
+        else
+            echo "FAIL"
+        fi
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
+
+exit 0

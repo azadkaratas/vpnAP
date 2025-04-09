@@ -1,0 +1,9 @@
+config BR2_PACKAGE_QT_GUI
+    bool "qt_gui"
+    default y
+    depends on BR2_PACKAGE_QT5
+    depends on BR2_PACKAGE_QT5DECLARATIVE
+    depends on BR2_PACKAGE_QT5QUICKCONTROLS2
+    depends on BR2_PACKAGE_QT5GRAPHICALEFFECTS
+    help
+      GUI with QT library
