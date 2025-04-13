@@ -26,6 +26,9 @@ rm -f ${TARGET_DIR}/etc/init.d/S49ntp
 rm -f ${TARGET_DIR}/etc/init.d/S60openvpn
 rm -f ${TARGET_DIR}/etc/hostapd.conf
 
+rm -f ${TARGET_DIR}/etc/init.d/S41dhcpcd
+rm -f ${TARGET_DIR}/etc/dhcpcd.conf
+
 # Version info
 BUILD_INFO_FILE=${BR2_EXTERNAL_APPLICATION_PATH}"/../version"
 CURRENT_DATE=$(date +%Y-%m-%d)
