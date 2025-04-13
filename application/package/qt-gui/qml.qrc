@@ -6,5 +6,6 @@
         <file>icons/upload.png</file>
         <file>icons/download.png</file>
         <file>icons/device.png</file>
+        <file>icons/temperature.png</file>
     </qresource>
 </RCC>

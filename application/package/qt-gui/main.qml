@@ -44,7 +44,7 @@ ApplicationWindow {
                         spacing: 8
 
                         StatusItem {
-                            labelText: "IP Address:"
+                            labelText: "Ethernet:"
                             valueText: deviceManager.ethernetStatus
                             iconColor: "#FF9800"
                         }
@@ -225,12 +225,12 @@ ApplicationWindow {
                 anchors.margins: 16
                 spacing: 10
 
-                // VPN Statistics Card
+                // Device Statistics Card
                 Card {
                     id: statsCard
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    cardTitle: "VPN Statistics"
+                    cardTitle: "Device Statistics"
 
                     GridLayout {
                         anchors.fill: parent
@@ -245,23 +245,11 @@ ApplicationWindow {
                             itemValue: deviceManager.uptime || "00:00:00"
                             itemIcon: "qrc:/icons/clock.svg"
                         }
-
+                        
                         StatItem {
-                            itemLabel: "Data Sent"
-                            itemValue: deviceManager.vpnDataSent || "0 MB"
-                            itemIcon: "qrc:/icons/upload.png"
-                        }
-
-                        StatItem {
-                            itemLabel: "Data Received"
-                            itemValue: deviceManager.vpnDataReceived || "0 MB"
-                            itemIcon: "qrc:/icons/download.png"
-                        }
-
-                        StatItem {
-                            itemLabel: "Connection Time"
-                            itemValue: deviceManager.vpnConnectionTime || "Not connected"
-                            itemIcon: "qrc:/icons/connection.png"
+                            itemLabel: "Temperature"
+                            itemValue: deviceManager.temperature
+                            itemIcon: "qrc:/icons/temperature.png"
                         }
                     }
                 }
@@ -269,7 +257,7 @@ ApplicationWindow {
                 Card {
                     id: devicesCard
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    height: 190
                     cardTitle: "Connected Devices (" + deviceManager.connectedDevices.length + ")"
 
                     ListView {
@@ -284,7 +272,6 @@ ApplicationWindow {
                             width: devicesList.width
                             deviceHostname: modelData.hostname
                             deviceIp: modelData.ip
-                            deviceMac: modelData.mac
                         }
 
                         ScrollBar.vertical: ScrollBar {
@@ -512,7 +499,6 @@ ApplicationWindow {
     component DeviceItem: Rectangle {
         property alias deviceHostname: hostname.text
         property alias deviceIp: ip.text
-        property alias deviceMac: mac.text
         
         height: 42
         color: "#303040"
