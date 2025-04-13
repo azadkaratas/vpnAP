@@ -110,12 +110,12 @@ ApplicationWindow {
                 Card {
                     id: vpnStatusCard
                     Layout.fillWidth: true
-                    Layout.fillHeight: true
+                    height: 170
                     cardTitle: "VPN Configuration"
 
                     ColumnLayout {
                         anchors.fill: parent
-                        anchors.topMargin: 40  // Added top margin for title
+                        anchors.topMargin: 40
                         anchors.margins: 12
                         spacing: 8
 
@@ -135,6 +135,32 @@ ApplicationWindow {
                             labelText: "Status:"
                             valueText: deviceManager.vpnStatus ? "Secured" : "Unsecured"
                             statusColor: deviceManager.vpnStatus ? "#4CAF50" : "#F44336"
+                        }
+
+                        // Refresh Button
+                        Button {
+                            text: "Refresh"
+                            Layout.fillWidth: true
+                            height: 15
+                            
+                            background: Rectangle {
+                                color: "#4CAF50"
+                                radius: 8
+                                opacity: parent.down ? 0.8 : 1.0
+                            }
+                            
+                            contentItem: Text {
+                                text: parent.text
+                                font.pixelSize: 12
+                                color: "white"
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            onClicked: {
+                                deviceManager.initializeVPNStatus()
+                            }
+
                         }
                     }
                 }
@@ -197,8 +223,6 @@ ApplicationWindow {
                         Button {
                             text: "Connect to " + vpnCountrySelector.currentText
                             Layout.fillWidth: true
-                            font.pixelSize: 14
-                            font.bold: true
                             
                             background: Rectangle {
                                 color: "#4CAF50"
@@ -208,6 +232,7 @@ ApplicationWindow {
                             
                             contentItem: Text {
                                 text: parent.text
+                                font.pixelSize: 12
                                 color: "white"
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter

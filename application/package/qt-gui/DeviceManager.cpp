@@ -9,8 +9,13 @@
 #include <QJsonArray>
 #include <QDateTime>
 #include <QSet>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 
 DeviceManager::DeviceManager(QObject *parent) : QObject(parent) {
+    initializeVPNStatus();
+    
     updateSystemInfo();
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &DeviceManager::updateSystemInfo);
@@ -58,15 +63,12 @@ void DeviceManager::toggleVpn() {
         QProcess process;
         process.start("/etc/init.d/S95vpnmgr stop &");
         process.waitForFinished();
-        m_vpnStatus = false;
     }
     else{
         QProcess process;
         process.start("/etc/init.d/S95vpnmgr start &");
         process.waitForFinished();
-        m_vpnStatus = true;
     }
-    emit vpnStatusChanged();
     updateSystemInfo();
 }
 
@@ -147,8 +149,6 @@ void DeviceManager::updateConnectedDevices() {
     if (m_connectedDevices != devices) {
         m_connectedDevices = devices;
         emit connectedDevicesChanged();
-        qDebug() << "Active devices found:" << devices.size() 
-                 << "Devices:" << devices;
     }
 }
 
@@ -203,31 +203,82 @@ void DeviceManager::updateTemperature(){
     }
 }
 
-bool DeviceManager::checkVPNStatus() {
-    m_vpnIpAddress = "N/A";
-    m_vpnCountry = "N/A";
-
+void DeviceManager::initializeVPNStatus() {
     QFile statusFile("/tmp/openvpn/status");
-    if (!statusFile.exists()) {
-        return false;
+    if (statusFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString status = statusFile.readAll().trimmed();
+        statusFile.close();
+        m_vpnStatus = (status == "1");
+    } else {
+        m_vpnStatus = false;
     }
 
-    QFile tunInterface("/sys/class/net/tun0");
-    if (!tunInterface.exists()) {
-        return false;
-    }
-
-    QProcess process;
-    process.start("ip", QStringList() << "addr" << "show" << "tun0");
-    process.waitForFinished();
-    QString output = process.readAllStandardOutput();
-    if (!output.contains("inet ")) {
-        return false;
-    }
+    QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+    QNetworkRequest request(QUrl("http://localhost:3000/api/vpn-status"));
+    request.setTransferTimeout(5000);
     
-    // VPN status update remains the same for now
-    m_vpnIpAddress = m_vpnStatus ? "192.168.1.100" : "N/A";
-    m_vpnCountry = m_vpnStatus ? "United States" : "N/A";
-    emit vpnIpAddressChanged();
-    return true;
+    QNetworkReply *reply = manager->get(request);
+    
+    connect(reply, &QNetworkReply::finished, this, [=]() {
+        if (reply->error() == QNetworkReply::NoError) {
+            QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+            QJsonObject obj = doc.object();
+            
+            m_vpnIpAddress = obj["vpnIpAddress"].toString();
+            m_vpnCountry = obj["vpnCountry"].toString();
+        } else {
+            qWarning() << "Initial VPN info fetch failed:" << reply->errorString();
+            m_vpnIpAddress = m_vpnStatus ? "Connecting..." : "Not connected";
+            m_vpnCountry = m_vpnStatus ? "Connecting..." : "Not connected";
+        }
+
+        emit vpnStatusChanged();
+        emit vpnIpAddressChanged();
+        emit vpnCountryChanged();
+        
+        reply->deleteLater();
+        manager->deleteLater();
+    });
+}
+
+void DeviceManager::checkVPNStatus() {
+    QFile statusFile("/tmp/openvpn/status");
+    bool newStatus = false;
+
+    if (statusFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QString status = statusFile.readAll().trimmed();
+        statusFile.close();
+        newStatus = (status == "1");
+    }
+
+    if (m_vpnStatus != newStatus) {
+        m_vpnStatus = newStatus;
+        emit vpnStatusChanged();
+
+        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+        QNetworkRequest request(QUrl("http://localhost:3000/api/vpn-status"));
+        request.setTransferTimeout(5000);
+        
+        QNetworkReply *reply = manager->get(request);
+        
+        connect(reply, &QNetworkReply::finished, this, [=]() {
+            if (reply->error() == QNetworkReply::NoError) {
+                QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+                QJsonObject obj = doc.object();
+                
+                m_vpnIpAddress = obj["vpnIpAddress"].toString();
+                m_vpnCountry = obj["vpnCountry"].toString();
+            } else {
+                qWarning() << "VPN info update failed:" << reply->errorString();
+                m_vpnIpAddress = "Connection error";
+                m_vpnCountry = "Connection error";
+            }
+
+            emit vpnIpAddressChanged();
+            emit vpnCountryChanged();
+            
+            reply->deleteLater();
+            manager->deleteLater();
+        });
+    }
 }

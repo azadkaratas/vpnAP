@@ -48,6 +48,8 @@ public slots:
     void updateFirmwareVersion();
     void updateEthernetStatus();
     void updateTemperature();
+    void checkVPNStatus();
+    void initializeVPNStatus();
 
 signals:
     void ethernetStatusChanged();

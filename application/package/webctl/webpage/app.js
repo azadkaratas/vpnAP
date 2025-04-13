@@ -21,6 +21,113 @@ app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// Framebuffer parametreleri
+const WIDTH = 480;
+const HEIGHT = 320;
+const BYTES_PER_PIXEL = 4; // 32-bit (varsayılan: BGR)
+
+// Framebuffer'dan piksel verilerini okuma
+function captureFramebuffer() {
+    return new Promise((resolve, reject) => {
+        fs.open('/dev/fb0', 'r', (err, fd) => {
+            if (err) return reject(err);
+
+            const buffer = Buffer.alloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
+            fs.read(fd, buffer, 0, buffer.length, 0, (err) => {
+                fs.close(fd, () => {});
+                if (err) return reject(err);
+
+                // Piksel verilerini sıkıştırılmış bir formatta hazırla
+                const pixels = new Uint8Array(WIDTH * HEIGHT * 3); // RGB için 3 bayt/piksel
+                for (let y = 0; y < HEIGHT; y++) {
+                    for (let x = 0; x < WIDTH; x++) {
+                        const idx = (y * WIDTH + x) * BYTES_PER_PIXEL;
+                        // BGR sırası varsayımı: mavi (B), yeşil (G), kırmızı (R)
+                        const b = buffer[idx];     // Mavi
+                        const g = buffer[idx + 1]; // Yeşil
+                        const r = buffer[idx + 2]; // Kırmızı
+                        // Alfa kanalı yok sayılır (idx + 3)
+                        const outIdx = (y * WIDTH + x) * 3;
+                        pixels[outIdx] = r;     // Tarayıcı için RGB sırasına çevir
+                        pixels[outIdx + 1] = g;
+                        pixels[outIdx + 2] = b;
+                    }
+                }
+                // Base64'e dönüştürerek sıkıştır
+                const base64Data = Buffer.from(pixels).toString('base64');
+                resolve(base64Data);
+            });
+        });
+    });
+}
+
+// Statik HTML sayfası
+app.get('/framebuffer', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Framebuffer Ekranı</title>
+            <style>
+                canvas {
+                    image-rendering: pixelated; /* Keskin pikseller */
+                    border: 1px solid #ccc;
+                }
+                #screen {
+                    width: ${WIDTH * 2}px; /* Netlik için 2x ölçek */
+                    height: ${HEIGHT * 2}px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Framebuffer Ekranı</h1>
+            <canvas id="screen" width="${WIDTH}" height="${HEIGHT}"></canvas>
+            <script>
+                const canvas = document.getElementById('screen');
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false; // Yumuşatmayı kapat
+
+                function refreshScreen() {
+                    fetch('/screenshot')
+                        .then(response => response.json())
+                        .then(data => {
+                            const pixels = new Uint8Array(atob(data.pixels).split('').map(c => c.charCodeAt(0)));
+                            const imageData = ctx.createImageData(${WIDTH}, ${HEIGHT});
+                            for (let i = 0; i < pixels.length; i += 3) {
+                                const idx = (i / 3) * 4;
+                                imageData.data[idx] = pixels[i];     // Kırmızı
+                                imageData.data[idx + 1] = pixels[i + 1]; // Yeşil
+                                imageData.data[idx + 2] = pixels[i + 2]; // Mavi
+                                imageData.data[idx + 3] = 255;       // Alfa
+                            }
+                            ctx.putImageData(imageData, 0, 0);
+                            setTimeout(refreshScreen, 100); // 10 FPS
+                        })
+                        .catch(err => console.error('Hata:', err));
+                }
+                refreshScreen();
+            </script>
+        </body>
+        </html>
+    `);
+});
+
+// Framebuffer verisini JSON olarak gönder
+app.get('/screenshot', async (req, res) => {
+    try {
+        const base64Data = await captureFramebuffer();
+        res.json({ pixels: base64Data });
+    } catch (err) {
+        console.error('Hata:', err);
+        res.status(500).send('Framebuffer okunamadı');
+    }
+});
+
+
+
+
+
+
 // Define paths
 const configPath = '/data/config.json';
 
@@ -467,38 +574,50 @@ app.post('/api/set-vpn-auth-credentials', (req, res) => {
 
 app.get('/api/vpn-status', async (req, res) => {
     const statusFilePath = '/tmp/openvpn/status';
+
+    const timeout = (ms) => new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), ms);
+    });
+
+    let isConnectedReadFromFile = false;
+    let vpnIpAddress = 'No content available';
+    let vpnCountry = 'No content available';
+
     try {
-        const response = await fetch('http://ip-api.com/json/');
+        const controller = new AbortController();
+        const timeoutMs = 5000;
+
+        const response = await Promise.race([
+            fetch('http://ip-api.com/json/', { signal: controller.signal }),
+            timeout(timeoutMs)
+        ]);
+
         const data = await response.json();
-        var isConnectedReadFromFile;
 
-        if (data.status === "success") {
+        if (data.status === 'success') {
+            vpnIpAddress = data.query;
+            vpnCountry = `${data.country}/${data.city}`;
+
             try {
-                if (!fs.existsSync(statusFilePath)) {
-                    isConnectedReadFromFile = false;
-                }
-
-                const data = fs.readFileSync(statusFilePath, 'utf8').trim();
-                if (data === '1') {
-                    isConnectedReadFromFile = true;
-                } else {
-                    isConnectedReadFromFile = false;
+                if (fs.existsSync(statusFilePath)) {
+                    const fileData = fs.readFileSync(statusFilePath, 'utf8').trim();
+                    isConnectedReadFromFile = fileData === '1';
                 }
             } catch (error) {
                 isConnectedReadFromFile = false;
             }
-            
-            res.json({
-                vpnStatus: isConnectedReadFromFile,
-                vpnIpAddress: data.query,
-                vpnCountry: data.country+"/"+data.city
-            });
-        } else {
-            res.status(500).json({ error: "Failed to fetch geolocation data." });
         }
     } catch (error) {
-        res.status(500).json({ error: "Error fetching geolocation data." });
+        isConnectedReadFromFile = false;
+        vpnIpAddress = 'No content available';
+        vpnCountry = 'No content available';
     }
+
+    res.json({
+        vpnStatus: isConnectedReadFromFile,
+        vpnIpAddress,
+        vpnCountry
+    });
 });
 
 function runCommand(command) {
@@ -515,7 +634,16 @@ function runCommand(command) {
 
 async function toggleVPN(ConnectOrDisconnect) {
     try {
-        if (ConnectOrDisconnect) {
+        const statusFilePath = '/tmp/openvpn/status';
+
+        if (!fs.existsSync(statusFilePath)) {
+            console.error('Status file does not exist.');
+            throw new Error('Status file not found.');
+        }
+
+        const data = fs.readFileSync(statusFilePath, 'utf8').trim();
+
+        if (data === '0') {
             console.log('Starting VPN...');
             const result = await runCommand('/etc/init.d/S95vpnmgr start &');
             console.log('VPN started successfully:', result);
@@ -525,15 +653,6 @@ async function toggleVPN(ConnectOrDisconnect) {
             console.log('VPN stopped successfully:', result);
         }
 
-        const statusFilePath = '/tmp/openvpn/status';
-
-        if (!fs.existsSync(statusFilePath)) {
-            console.error('Status file does not exist.');
-            throw new Error('Status file not found.');
-        }
-
-        const data = fs.readFileSync(statusFilePath, 'utf8').trim();
-        return data === '1';
     } catch (error) {
         console.error('Error toggling VPN:', error.message);
         throw error;

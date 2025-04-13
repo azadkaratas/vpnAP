@@ -7,15 +7,78 @@ PID_FILE="/var/run/openvpn.pid"
 VPN_STATUS_FILE="/tmp/openvpn/status"
 TUN_IF="tun0"
 ETH_IF="eth0"
+VPN_LOG="/var/log/openvpn.log"
+MAX_WAIT=15
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
+check_ethernet() {
+    if [ ! -d "/sys/class/net/$ETH_IF" ]; then
+        log "Error: Ethernet interface $ETH_IF does not exist"
+        return 1
+    fi
+
+    if [ "$(cat /sys/class/net/$ETH_IF/carrier)" != "1" ]; then
+        log "Error: Ethernet cable is not connected"
+        return 1
+    fi
+
+    if ! ip addr show $ETH_IF | grep -q "inet "; then
+        log "Error: No IP address assigned to Ethernet interface"
+        return 1
+    fi
+
+    return 0
+}
+
+check_vpn_connection() {
+    if ! check_ethernet; then
+        log "Skipping VPN check: No ethernet connection"
+        return 1
+    fi
+
+    local counter=0
+    
+    while [ ! -d "/sys/class/net/tun0" ] && [ $counter -lt $MAX_WAIT ]; do
+        sleep 1
+        counter=$((counter + 1))
+    done
+
+    if [ ! -d "/sys/class/net/tun0" ]; then
+        log "Error: TUN interface not created"
+        return 1
+    fi
+
+    if ! ip addr show tun0 | grep -q "inet "; then
+        log "Error: No IP address assigned to TUN interface"
+        return 1
+    fi
+
+    if ! grep -q "Initialization Sequence Completed" "$VPN_LOG"; then
+        log "Error: OpenVPN initialization not completed"
+        return 1
+    fi
+
+    if ! ping -c 1 -W 5 10.8.8.0 > /dev/null 2>&1; then
+        log "Error: Cannot ping VPN gateway"
+        return 1
+    fi
+
+    return 0
+}
+
 start() {
     log "Starting OpenVPN..."
-    ntpd -q -g & 2>&1 | tee -a "$LOG_FILE"
 
+    if ! check_ethernet; then
+        log "Cannot start VPN: No ethernet connection"
+        mkdir -p /tmp/openvpn && echo 0 > "$VPN_STATUS_FILE"
+        return 1
+    fi
+
+    ntpd -q -g & 2>&1 | tee -a "$LOG_FILE"
     modprobe tun
 
     log "Configuring NAT..."
@@ -24,11 +87,18 @@ start() {
     iptables -A FORWARD -i "$ETH_IF" -o "$TUN_IF" -j ACCEPT
 
     start-stop-daemon --start -q -b -m -p "$PID_FILE" --exec /usr/sbin/openvpn -- \
-        --config "$VPN_CONFIG" --auth-user-pass "$AUTH_FILE"
+        --config "$VPN_CONFIG" --auth-user-pass "$AUTH_FILE" \
+        --log "$VPN_LOG" --status "$VPN_LOG" 1
 
-    mkdir -p /tmp/openvpn && echo 1 > $VPN_STATUS_FILE
-
-    log "OpenVPN started successfully."
+    if check_vpn_connection; then
+        log "OpenVPN connection established successfully"
+        mkdir -p /tmp/openvpn && echo 1 > "$VPN_STATUS_FILE"
+    else
+        log "OpenVPN connection failed"
+        mkdir -p /tmp/openvpn && echo 0 > "$VPN_STATUS_FILE"
+        stop
+        return 1
+    fi
 }
 
 stop() {
@@ -58,13 +128,23 @@ status() {
     if [ -e "$PID_FILE" ]; then
         PID=$(cat "$PID_FILE")
         if [ -d "/proc/$PID" ]; then
-            log "VPN is running."
+            if check_vpn_connection; then
+                log "VPN is running and connected"
+                return 0
+            else
+                log "VPN process is running but connection is not established"
+                return 1
+            fi
         else
-            log "VPN is not running."
+            log "VPN is not running"
             rm -f "$PID_FILE"
+            mkdir -p /tmp/openvpn && echo 0 > "$VPN_STATUS_FILE"
+            return 1
         fi
     else
-        log "VPN is not running."
+        log "VPN is not running"
+        mkdir -p /tmp/openvpn && echo 0 > "$VPN_STATUS_FILE"
+        return 1
     fi
 }
 
