@@ -2,9 +2,6 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>icons/clock.svg</file>
-        <file>icons/connection.png</file>
-        <file>icons/upload.png</file>
-        <file>icons/download.png</file>
         <file>icons/device.png</file>
         <file>icons/temperature.png</file>
     </qresource>
