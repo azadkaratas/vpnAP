@@ -1,0 +1,5 @@
+config BR2_PACKAGE_LCD_SCREEN
+    bool "lcd-screen"
+		default y
+    help
+      Simple GPIO kernel module for Raspberry Pi to control GPIO pins.

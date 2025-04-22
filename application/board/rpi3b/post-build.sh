@@ -7,6 +7,8 @@ cp ${BR2_EXTERNAL_APPLICATION_PATH}/board/rpi3b/cmdline.txt ${TARGET_DIR}/../ima
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/board/rpi3b/config.txt ${TARGET_DIR}/../images/rpi-firmware/config.txt 
 
 cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/system/* ${TARGET_DIR}/
+cp -a ${TARGET_DIR}/../build/lcd-screen-1.0/lcd-screen.dtbo ${TARGET_DIR}/../images/rpi-firmware/overlays/
+cp -a ${TARGET_DIR}/../build/lcd-screen-1.0/lcd-screen.ko ${TARGET_DIR}/lib/modules/6.6.28-v8/
 
 cp -a ${BR2_EXTERNAL_APPLICATION_PATH}/package/json-web-gen/* ${TARGET_DIR}/usr/html/
 cp ${BR2_EXTERNAL_APPLICATION_PATH}/package/webctl/webpage/* ${TARGET_DIR}/usr/html/

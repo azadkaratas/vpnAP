@@ -6,7 +6,7 @@ PIDFILE=/var/run/qt-gui.pid
 case "$1" in
     start)
         printf "Starting qt_gui: "
-        start-stop-daemon --start --quiet --background --pidfile "$PIDFILE" --exec "$DAEMON" -- -platform linuxfb
+        start-stop-daemon --start --quiet --background --pidfile "$PIDFILE" --exec "$DAEMON" -- -platform linuxfb:fb=/dev/fb1
         if [ $? -eq 0 ]; then
             echo "OK"
         else
