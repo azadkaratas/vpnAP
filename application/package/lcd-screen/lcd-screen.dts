@@ -49,7 +49,7 @@
 				rotate = <0x00>;
 				width = <0x140>;
 				height = <0x1e0>;
-				rgb;
+				bgr = <1>; /* Explicitly set RGB order */
 				fps = <0x3c>;
 				buswidth = <0x08>;
 				regwidth = <0x08>;
