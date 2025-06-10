@@ -7,3 +7,6 @@
 [submodule "application/package/firmware-updater"]
 	path = application/package/firmware-updater
 	url = https://github.com/azadkaratas/firmware-updater.git
+[submodule "application/package/logger"]
+	path = application/package/logger
+	url = https://github.com/azadkaratas/logger.git

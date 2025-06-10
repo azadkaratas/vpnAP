@@ -5,6 +5,7 @@ menu "Target packages"
     source "$BR2_EXTERNAL_APPLICATION_PATH/package/firmware-updater/Config.in"
     source "$BR2_EXTERNAL_APPLICATION_PATH/package/qt-gui/Config.in"
     source "$BR2_EXTERNAL_APPLICATION_PATH/package/lcd-screen/Config.in"
+    source "$BR2_EXTERNAL_APPLICATION_PATH/package/logger/Config.in"
 endmenu
 
 menu "Select the board"
