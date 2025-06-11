@@ -817,4 +817,14 @@ app.get('/api/readfile/var/log/messages', async (req, res) => {
     } catch (error) {
         res.status(500).send(`Error at file reading - ${error.message}`);
     }
-  });
+});
+
+app.get('/api/readfile/var/log/app', async (req, res) => {
+    const filePath = '/var/log/app.log';
+    try {
+        const content = await fs_asenkron.readFile(filePath, { encoding: 'utf8' });
+        res.send(content);
+    } catch (error) {
+        res.status(500).send(`Error at file reading - ${error.message}`);
+    }
+});

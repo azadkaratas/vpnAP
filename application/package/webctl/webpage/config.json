@@ -41,8 +41,13 @@
       "title": "System",
       "subtabs": [
         {
-          "id": "eventLog",
-          "title": "Event Logs",
+          "id": "deviceLog",
+          "title": "Device Logs",
+          "description": "Review device logs to monitor activity, troubleshoot issues, and track system events over time."
+        },
+        {
+          "id": "systemLog",
+          "title": "System Logs",
           "description": "Review detailed system event logs to monitor device activity, troubleshoot issues, and track system events over time."
         },
         {
@@ -197,7 +202,17 @@
       ]
     },
     {
-      "subtabId": "eventLog",
+      "subtabId": "deviceLog",
+      "items": [
+        {
+          "type": "fileReader",
+          "id": "logReader",
+          "fetchFromAPI": "/api/readfile/var/log/app"
+        }
+      ]
+    },
+    {
+      "subtabId": "systemLog",
       "items": [
         {
           "type": "fileReader",
