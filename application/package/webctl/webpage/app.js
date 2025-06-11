@@ -9,8 +9,12 @@ const multer = require('multer');
 const util = require('util');
 const execPromise = util.promisify(exec);
 const fsp = require('fs').promises;
+const logger = require('/usr/lib/node_modules/logger/logger.node');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
+
+logger.init('web_app', '/var/log/app.log');
+logger.log(logger.LogLevel.INFO, 'web_app', '', 'Starting web app');
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
@@ -20,113 +24,6 @@ const PORT = 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
-// Framebuffer parametreleri
-const WIDTH = 480;
-const HEIGHT = 320;
-const BYTES_PER_PIXEL = 4; // 32-bit (varsayılan: BGR)
-
-// Framebuffer'dan piksel verilerini okuma
-function captureFramebuffer() {
-    return new Promise((resolve, reject) => {
-        fs.open('/dev/fb0', 'r', (err, fd) => {
-            if (err) return reject(err);
-
-            const buffer = Buffer.alloc(WIDTH * HEIGHT * BYTES_PER_PIXEL);
-            fs.read(fd, buffer, 0, buffer.length, 0, (err) => {
-                fs.close(fd, () => {});
-                if (err) return reject(err);
-
-                // Piksel verilerini sıkıştırılmış bir formatta hazırla
-                const pixels = new Uint8Array(WIDTH * HEIGHT * 3); // RGB için 3 bayt/piksel
-                for (let y = 0; y < HEIGHT; y++) {
-                    for (let x = 0; x < WIDTH; x++) {
-                        const idx = (y * WIDTH + x) * BYTES_PER_PIXEL;
-                        // BGR sırası varsayımı: mavi (B), yeşil (G), kırmızı (R)
-                        const b = buffer[idx];     // Mavi
-                        const g = buffer[idx + 1]; // Yeşil
-                        const r = buffer[idx + 2]; // Kırmızı
-                        // Alfa kanalı yok sayılır (idx + 3)
-                        const outIdx = (y * WIDTH + x) * 3;
-                        pixels[outIdx] = r;     // Tarayıcı için RGB sırasına çevir
-                        pixels[outIdx + 1] = g;
-                        pixels[outIdx + 2] = b;
-                    }
-                }
-                // Base64'e dönüştürerek sıkıştır
-                const base64Data = Buffer.from(pixels).toString('base64');
-                resolve(base64Data);
-            });
-        });
-    });
-}
-
-// Statik HTML sayfası
-app.get('/framebuffer', (req, res) => {
-    res.send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Framebuffer Ekranı</title>
-            <style>
-                canvas {
-                    image-rendering: pixelated; /* Keskin pikseller */
-                    border: 1px solid #ccc;
-                }
-                #screen {
-                    width: ${WIDTH * 2}px; /* Netlik için 2x ölçek */
-                    height: ${HEIGHT * 2}px;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>Framebuffer Ekranı</h1>
-            <canvas id="screen" width="${WIDTH}" height="${HEIGHT}"></canvas>
-            <script>
-                const canvas = document.getElementById('screen');
-                const ctx = canvas.getContext('2d');
-                ctx.imageSmoothingEnabled = false; // Yumuşatmayı kapat
-
-                function refreshScreen() {
-                    fetch('/screenshot')
-                        .then(response => response.json())
-                        .then(data => {
-                            const pixels = new Uint8Array(atob(data.pixels).split('').map(c => c.charCodeAt(0)));
-                            const imageData = ctx.createImageData(${WIDTH}, ${HEIGHT});
-                            for (let i = 0; i < pixels.length; i += 3) {
-                                const idx = (i / 3) * 4;
-                                imageData.data[idx] = pixels[i];     // Kırmızı
-                                imageData.data[idx + 1] = pixels[i + 1]; // Yeşil
-                                imageData.data[idx + 2] = pixels[i + 2]; // Mavi
-                                imageData.data[idx + 3] = 255;       // Alfa
-                            }
-                            ctx.putImageData(imageData, 0, 0);
-                            setTimeout(refreshScreen, 100); // 10 FPS
-                        })
-                        .catch(err => console.error('Hata:', err));
-                }
-                refreshScreen();
-            </script>
-        </body>
-        </html>
-    `);
-});
-
-// Framebuffer verisini JSON olarak gönder
-app.get('/screenshot', async (req, res) => {
-    try {
-        const base64Data = await captureFramebuffer();
-        res.json({ pixels: base64Data });
-    } catch (err) {
-        console.error('Hata:', err);
-        res.status(500).send('Framebuffer okunamadı');
-    }
-});
-
-
-
-
-
 
 // Define paths
 const configPath = '/data/config.json';

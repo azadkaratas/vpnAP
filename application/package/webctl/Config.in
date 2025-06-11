@@ -1,5 +1,7 @@
 config BR2_PACKAGE_WEBCTL
     bool "WebCtl Package"
 		default y
+    depends on BR2_PACKAGE_LOGGER
+    depends on BR2_PACKAGE_NODEJS
     help
       WebCtl is a package that controls tasks coming from the web and manages web files.
