@@ -1,0 +1,78 @@
+{
+  "parameters": [
+    {
+      "name": "temperature",
+      "enabled": true,
+      "monitoring_period": 5,
+      "signalling": {
+        "enabled": true,
+        "thresholds": [
+          {
+            "type": "min",
+            "value": 0,
+            "message": "Temperature too low!"
+          },
+          {
+            "type": "max",
+            "value": 85,
+            "message": "Temperature too high!"
+          }
+        ]
+      },
+      "logging": {
+        "enabled": true,
+        "file": "temperature.log"
+      }
+    },
+    {
+      "name": "cpu_usage",
+      "enabled": true,
+      "monitoring_period": 10,
+      "signalling": {
+        "enabled": true,
+        "thresholds": [
+          {
+            "type": "max",
+            "value": 90,
+            "message": "CPU usage too high!"
+          }
+        ]
+      },
+      "logging": {
+        "enabled": true,
+        "file": "cpu_usage.log"
+      }
+    },
+    {
+      "name": "memory_usage",
+      "enabled": false,
+      "monitoring_period": 15,
+      "signalling": {
+        "enabled": false,
+        "thresholds": []
+      },
+      "logging": {
+        "enabled": false,
+        "file": "memory_usage.log"
+      }
+    },
+    {
+      "name": "ethernet",
+      "enabled": true,
+      "monitoring_period": 3,
+      "signalling": {
+        "enabled": true,
+        "thresholds": [
+          {
+            "type": "status_change",
+            "message": "Ethernet status changed"
+          }
+        ]
+      },
+      "logging": {
+        "enabled": true,
+        "file": "ethernet.log"
+      }
+    }
+  ]
+}

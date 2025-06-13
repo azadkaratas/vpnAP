@@ -51,6 +51,10 @@ case $1 in
     start)
 	printf "Starting initdevice: "
 
+	export FRAMEBUFFER=/dev/fb1
+	fbv /data/boot.jpg -y
+		unset FRAMEBUFFER
+
 	# Check if data /dev/mmcblk0p4 is mounted or not
 	if ! mountpoint -q /data; then
 		echo "/data is not mounted, mounting now..."

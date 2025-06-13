@@ -1,0 +1,22 @@
+#!/bin/sh
+
+case $1 in
+    start)
+	printf "Starting monitor: "
+	start-stop-daemon --start --background -p /var/run/monitor.pid --exec /usr/bin/monitor
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    stop)
+	printf "Stopping monitor: "
+	killall monitor
+	[ $? = 0 ] && echo "OK" || echo "FAIL"
+	;;
+    restart)
+	$0 stop
+	$0 start
+	;;
+    *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+	;;
+esac

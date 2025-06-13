@@ -1,0 +1,7 @@
+config BR2_PACKAGE_MONITOR
+	bool "monitor"
+    default y
+	select BR2_PACKAGE_CJSON
+	help
+	  A generic monitoring process that reads parameters from a JSON file,
+	  monitors system values, logs them, and checks thresholds.
