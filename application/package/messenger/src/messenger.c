@@ -1,119 +1,112 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <dbus/dbus.h>
+#include <generic-dbus/dbus_common.h>
+#include "messenger.h"
 
-const char *const SERVICE_BUS_NAME = "com.embedlinux.messenger";
-const char *const OBJECT_PATH_NAME = "/com/embedlinux/messenger";
-const char *const INTERFACE_NAME = "com.embedlinux.web";
+// Method implementations
+dbus_int32_t add_numbers(dbus_int32_t num1, dbus_int32_t num2) {
+    printf("Adding %d + %d\n", num1, num2);
+    return num1 + num2;
+}
 
-const char *const METHOD_NAME = "add_numbers";
-const char *const INTROSPECT_XML = 
-    "<node>"
-    "  <interface name='com.embedlinux.web'>"
-    "    <method name='add_numbers'>"
-    "      <arg type='i' name='num1' direction='in'/>"
-    "      <arg type='i' name='num2' direction='in'/>"
-    "      <arg type='i' name='result' direction='out'/>"
-    "    </method>"
-    "  </interface>"
-    "</node>";
+double read_temperature(void) {
+    printf("Reading temperature\n");
+    return 25.5; // Dummy value
+}
 
-
-int main (int argc, char **argv)
-{
-    DBusConnection *conn;
-    DBusMessage *reply;
-    DBusMessage *message;
-    DBusError err;
+// Handle add_numbers method
+static void handle_add_numbers(DBusMessage *msg) {
     DBusMessageIter args;
+    dbus_int32_t num1, num2;
 
-    dbus_error_init (&err);
-
-    conn = dbus_bus_get (DBUS_BUS_SYSTEM, &err);
-    if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "Connection Error (%s)\n", err.message);
-        dbus_error_free(&err);
+    if (!dbus_message_iter_init(msg, &args) || 
+        dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_INT32) {
+        fprintf(stderr, "Invalid arguments for add_numbers\n");
+        return;
     }
-    if (conn == NULL) {
-        exit(1);
+    dbus_message_iter_get_basic(&args, &num1);
+    dbus_message_iter_next(&args);
+    if (dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_INT32) {
+        fprintf(stderr, "Invalid second argument for add_numbers\n");
+        return;
     }
+    dbus_message_iter_get_basic(&args, &num2);
 
-    int ret = dbus_bus_request_name (conn, SERVICE_BUS_NAME, DBUS_NAME_FLAG_DO_NOT_QUEUE, &err);
-    if (dbus_error_is_set(&err)) {
-        fprintf(stderr, "Name Error (%s)\n", err.message);
-        dbus_error_free(&err);
-    }
-    if (ret != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER) {
-        exit(1);
-    }
+    dbus_int32_t result = add_numbers(num1, num2);
 
-    // Handle request from clients
-    while (1) {
-        // Block for msg from client
-        if (!dbus_connection_read_write_dispatch (conn, -1)) {
-            fprintf (stderr, "Not connected now.\n");
-            exit (1);
-        }
-
-        if ((message = dbus_connection_pop_message (conn)) == NULL) {
-            fprintf (stderr, "Did not get message\n");
-            continue;
-        } 
-        
-        // Check for introspection requests
-        if (dbus_message_is_method_call(message, "org.freedesktop.DBus.Introspectable", "Introspect")) {            
-            if ((reply = dbus_message_new_method_return(message)) == NULL) {
-                fprintf (stderr, "Error in dbus_message_new_method_return\n");
-                exit (1);
-            }
-
-            dbus_message_iter_init_append(reply, &args);
-            if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &INTROSPECT_XML)) {
-                fprintf (stderr, "Error in dbus_message_iter_append_basic\n");
-                exit (1);
-            }
-
-            if (!dbus_connection_send(conn, reply, NULL)) {
-                fprintf (stderr, "Error in dbus_connection_send\n");
-                exit (1);
-            }
-
-            dbus_connection_flush(conn);
-            dbus_message_unref(reply);
-            continue; // No need to process further for introspect requests
-        }
-
-        // Check for method call to add_numbers
-        if (dbus_message_is_method_call (message, INTERFACE_NAME, METHOD_NAME)) {
-            
-            int value1, value2, result;
-            if (!dbus_message_iter_init(message, &args)) {
-                printf("Message has no arguments!\n");
-            }
-            else {
-                dbus_message_iter_get_basic(&args, &value1);
-                dbus_message_iter_next(&args);
-                dbus_message_iter_get_basic(&args, &value2);
-                //syslog (LOG_INFO, "Received message: %s", message2);
-            }
-
-            result = value1 + value2;
-            printf("RESULT: %d\n", result);
-
-            // Send the result back
-            reply = dbus_message_new_method_return(message);
-            dbus_message_iter_init_append(reply, &args);
-            dbus_message_iter_append_basic(&args, DBUS_TYPE_INT32, &result);
-
-            if (!dbus_connection_send(conn, reply, NULL)) {
-                printf("Error at dbus_connection_send\n");
-                //syslog (LOG_INFO, "Error at dbus_connection_send\n");
-                exit(1);
-            }
-
-            dbus_message_unref (reply);
-        }
+    DBusMessage *reply = dbus_message_new_method_return(msg);
+    if (!reply) {
+        fprintf(stderr, "Failed to create reply for add_numbers\n");
+        return;
     }
 
+    dbus_message_iter_init_append(reply, &args);
+    dbus_message_iter_append_basic(&args, DBUS_TYPE_INT32, &result);
+
+    if (!dbus_connection_send(dbus_connection_get(), reply, NULL)) {
+        fprintf(stderr, "Failed to send reply for add_numbers\n");
+    }
+    dbus_connection_flush(dbus_connection_get());
+    dbus_message_unref(reply);
+}
+
+// Handle read_temperature method
+static void handle_read_temperature(DBusMessage *msg) {
+    double result = read_temperature();
+
+    DBusMessage *reply = dbus_message_new_method_return(msg);
+    if (!reply) {
+        fprintf(stderr, "Failed to create reply for read_temperature\n");
+        return;
+    }
+
+    DBusMessageIter args;
+    dbus_message_iter_init_append(reply, &args);
+    dbus_message_iter_append_basic(&args, DBUS_TYPE_DOUBLE, &result);
+
+    if (!dbus_connection_send(dbus_connection_get(), reply, NULL)) {
+        fprintf(stderr, "Failed to send reply for read_temperature\n");
+    }
+    dbus_connection_flush(dbus_connection_get());
+    dbus_message_unref(reply);
+}
+
+// Message Handler
+static DBusHandlerResult message_handler(DBusConnection *conn, DBusMessage *msg, void *user_data) {
+    // Handle introspection
+    DBusHandlerResult result = dbus_handle_introspect(conn, msg, MESSENGER_INTROSPECT_XML);
+    if (result == DBUS_HANDLER_RESULT_HANDLED) {
+        return result;
+    }
+
+    // Handle add_numbers
+    if (dbus_message_is_method_call(msg, MESSENGER_INTERFACE, "add_numbers")) {
+        handle_add_numbers(msg);
+        return DBUS_HANDLER_RESULT_HANDLED;
+    }
+
+    // Handle read_temperature
+    if (dbus_message_is_method_call(msg, MESSENGER_INTERFACE, "read_temperature")) {
+        handle_read_temperature(msg);
+        return DBUS_HANDLER_RESULT_HANDLED;
+    }
+
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+}
+
+int main() {
+    // Initialize DBus
+    DBUS_INIT_SERVICE(MESSENGER_SERVICE_NAME);
+
+    // Add message handler
+    DBUS_ADD_HANDLER(message_handler);
+
+    // Main loop
+    while (dbus_connection_read_write_dispatch(dbus_connection_get(), -1));
+
+    // Cleanup
+    if (dbus_connection_get()) {
+        dbus_connection_unref(dbus_connection_get());
+    }
     return 0;
 }

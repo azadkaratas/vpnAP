@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const app = express();
-var DBus = require('dbus');
+const { registerRoutes } = require('./dbus_calls');
 const multer = require('multer');
 const util = require('util');
 const execPromise = util.promisify(exec);
@@ -12,6 +12,9 @@ const fsp = require('fs').promises;
 const logger = require('/usr/lib/node_modules/logger/logger.node');
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, '')));
+
+// Register routes from dbus_calls
+registerRoutes(app);
 
 logger.init('web_app', '/var/log/app.log');
 logger.log(logger.LogLevel.INFO, 'web_app', '', 'Starting web app');

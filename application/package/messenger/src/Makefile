@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = $(MESSENGER_CFLAGS)
 LDFLAGS = $(MESSENGER_LDFLAGS)
 
-SRCS = messenger.c
+SRCS = messenger.c $(GENERIC_DBUS_DIR)/dbus_common.c
 OBJS = $(SRCS:.c=.o)
 
 messenger: $(OBJS)
