@@ -7,12 +7,22 @@
 MONITOR_VERSION = 1.0
 MONITOR_SITE = $(MONITOR_PKGDIR)/src
 MONITOR_SITE_METHOD = local
-MONITOR_DEPENDENCIES = cjson
+MONITOR_DEPENDENCIES = cjson dbus
 MONITOR_LICENSE = MIT
 MONITOR_LICENSE_FILES = LICENSE
 
-define MONITOR_BUILD_CMDS
-	$(TARGET_CC) $(TARGET_CFLAGS) -o $(@D)/monitor $(@D)/monitor.c $(@D)/device_mon.c $(@D)/network_mon.c -lcjson -lpthread
+MONITOR_CFLAGS = $(TARGET_CFLAGS)
+MONITOR_CFLAGS += -I$(STAGING_DIR)/usr/include/dbus-1.0
+MONITOR_CFLAGS += -I$(STAGING_DIR)/usr/lib/dbus-1.0/include
+MONITOR_CFLAGS += -I$(BR2_EXTERNAL_APPLICATION_PATH)/tools/generic-dbus
+
+MONITOR_LDFLAGS = $(TARGET_LDFLAGS)
+MONITOR_LDFLAGS += -L$(STAGING_DIR)/usr/lib -ldbus-1  -lcjson -lpthread
+
+define MONITOR_BUILD_CMDS 
+	$(MAKE) CC="$(TARGET_CC)" -o $(@D)/monitor \
+		$(@D)/monitor.c $(@D)/device_mon.c $(@D)/network_mon.c $(BR2_EXTERNAL_APPLICATION_PATH)/tools/generic-dbus/dbus_common.c \
+		CFLAGS="$(MONITOR_CFLAGS)" LDFLAGS="$(MONITOR_LDFLAGS)"
 endef
 
 define MONITOR_INSTALL_TARGET_CMDS
@@ -21,4 +31,3 @@ define MONITOR_INSTALL_TARGET_CMDS
 endef
 
 $(eval $(generic-package))
-
